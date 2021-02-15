@@ -92,7 +92,7 @@ evaluate.median <- function(object, column, print = TRUE){
 }
 ```
 
-
+## Medians per column
 ```{r}
 which.loop <- names(imp$data)[11:85]
 for (i in 1:length(which.loop)){
@@ -101,6 +101,30 @@ for (i in 1:length(which.loop)){
 ```
 
 ---
+
+# Tables
+
+## Evaluation function
+```{r}
+evaluate.tables <- function(object, column, print = TRUE){
+  observed <- table(imp$data[, column]) %>% prop.table() %>% round(digits = 4)
+  imputed <- complete(object, "all")  %>% 
+    map(~ table(.[, column]) %>% prop.table) %>% 
+    Reduce("+", .)/object$m 
+  print(list(column = column,
+              observed = observed, 
+              imputed = imputed %>% round(digits = 4), 
+              bias = (observed - imputed) %>% round(digits = 4)))
+}
+```
+
+## tables per column
+```{r}
+which.loop <- names(imp$data)[11:85]
+for (i in 1:length(which.loop)){
+  evaluate.tables(imp, which.loop[i])
+}
+```
 
 # Densities
 ```{r}
