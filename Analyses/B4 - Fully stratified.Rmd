@@ -77,7 +77,7 @@ The relative frequencies for the 144 cells in Field x Rank x Gender x Research x
 ```{r}
 d50[[1]] %$% # Take the first listed dimension because Gender does not differ
   table(Field, Rank, Gender, Research, Support) %>% 
-  prop.table() %>% 
+  prop.table(margin = c("Field", "Gender", "Research", "Support")) %>% 
   round(4)
 ```
  

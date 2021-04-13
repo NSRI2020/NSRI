@@ -1571,11 +1571,9 @@ h3 { /* Header 3 */
   font-size: 18px;
 }
 code.r{ /* Code block */
-  font-size: 12px;
+  font-size: 8px;
 }
-pre { /* Code block - determines code spacing between lines */
-  font-size: 14px;
-}
+
 </style>
 <hr />
 <p>This documents prepares the 50 imputed data sets for statistical analysis.</p>
@@ -1596,7 +1594,7 @@ library(psych)</code></pre>
 </div>
 <div id="make-data-object" class="section level1">
 <h1>Make data object</h1>
-<p>The 50 imputed data sets are stored in the list <code>d50</code>.</p>
+<p>Storing the 50 imputed data sets in the list <code>d50</code>.</p>
 <pre class="r"><code>d50 &lt;- imp %&gt;% 
   complete(&quot;all&quot;) </code></pre>
 <hr />
@@ -1609,6 +1607,7 @@ library(psych)</code></pre>
 </div>
 <div id="names-rrps-and-qrps" class="section level1">
 <h1>Names RRP’s and QRP’s</h1>
+<p>Vectors that will be used to rename RP1 to RP22 in intelligible names for the RPPs (starting with the letter R) and QRPs (starting with the letter Q)</p>
 <pre class="r"><code>rrp &lt;- c(&quot;RDisclFunds&quot;, &quot;RCorrectPub&quot;, &quot;RAuthorship&quot;, &quot;ROpenData&quot;, &quot;RKeepRecord&quot;, 
          &quot;RPreReg&quot;, &quot;RDataManage&quot;, &quot;ROpenAccess&quot;, &quot;RCiteSource&quot;, &quot;ROpenCode&quot;, &quot;RErrorCheck&quot;)
 qrp &lt;- c(&quot;QAttention&quot;, &quot;QSupervision&quot;, &quot;QResDesign&quot;, &quot;QUnfairRev&quot;, &quot;QUnsubstClaims&quot;, 
@@ -1620,8 +1619,8 @@ qrp &lt;- c(&quot;QAttention&quot;, &quot;QSupervision&quot;, &quot;QResDesign&q
 <ol style="list-style-type: decimal">
 <li><p>Background variables (5): “Field”, “Rank”, “Gender”, “Research”, “Support” (Group)</p></li>
 <li><p>Explanatory variables (75): ordered from 1 to 75</p></li>
-<li><p>RRP variables (11): names in <code>rrp</code> (RP1, RP2, RP4, RP6, RP9, RP12, RP15, RP16, RP17, RP19, RP21)</p></li>
-<li><p>QRP variables (11): names in <code>rrp</code> (RP3, RP5, RP7, RP8, RP10, RP11, RP13, RP14, RP18, RP20, RP22)</p></li>
+<li><p>RRP variables (11): names in <code>rrp</code> with suffix <code>_raw</code> to indicate that Not Applicable are coded 0.</p></li>
+<li><p>QRP variables (11): names in <code>rrp</code> with suffix <code>_raw</code> to indicate that Not Applicable are coded 0.</p></li>
 <li><p>RR variables (2): “RRfabr” (RR1) and “RRfals” (RR2)</p></li>
 </ol>
 <pre class="r"><code>d50 &lt;- d50 %&gt;% 
@@ -1675,7 +1674,7 @@ names(d50[[1]])</code></pre>
 <h1>Recoding variables</h1>
 <div id="background-variables" class="section level2">
 <h2>Background variables</h2>
-<p>Shorten labels of background variables for use in tables and graphs.</p>
+<p>Shortening labels of background variables for use in tables and graphs.</p>
 <pre class="r"><code>d50 &lt;- d50 %&gt;%  
   map(~ .x %&gt;% 
         mutate_at(vars(Field), recode_factor, 
@@ -1705,7 +1704,7 @@ names(d50[[1]])</code></pre>
 </div>
 <div id="rr-variables" class="section level2">
 <h2>RR variables</h2>
-<p>Recoding the answers “triangle” and “circle” into 0 (no) and 1 (yes)</p>
+<p>Recoding the answers “triangle” and “circle” of the randomized response items into 0 (no) and 1 (yes).</p>
 <pre class="r"><code>d50 &lt;- d50 %&gt;% 
   map(~ .x %&gt;% 
         mutate_at(vars(RRfabr), recode, `circle` = 0, `triangle` = 1) %&gt;% 
@@ -1715,64 +1714,17 @@ names(d50[[1]])</code></pre>
 </div>
 <div id="adding-new-variables" class="section level1">
 <h1>Adding new variables</h1>
-<p>Recoding NA’s in RRP/QRP’s</p>
-<ul>
-<li><p>For RRP’s: 0 (Not Applicable) changed into 7 (Always)</p></li>
-<li><p>For QRP’s: 0 (Not Applicable) changed into 1 (Never)</p></li>
-</ul>
+<p>Recoding the 0 scores (Not Applicable) in the raw RRP/QRP variables into 1 (“Never”)</p>
 <pre class="r"><code>d50 &lt;- d50 %&gt;% 
   map(~ .x %&gt;% 
-        mutate_at(vars(!!!syms(paste0(rrp, &quot;_raw&quot;))), list(r = ~ recode(., `0` = 7))) %&gt;% 
+        mutate_at(vars(!!!syms(paste0(rrp, &quot;_raw&quot;))), list(r = ~ recode(., `0` = 1))) %&gt;% 
         rename_at(vars(ends_with((&quot;_raw_r&quot;))), ~ gsub(&quot;_raw_r&quot;, &quot;&quot;, .x)) %&gt;% 
         mutate_at(vars(!!!syms(paste0(qrp, &quot;_raw&quot;))), list(q = ~ recode(., `0` = 1))) %&gt;% 
         rename_at(vars(ends_with((&quot;_raw_q&quot;))), ~ gsub(&quot;_raw_q&quot;, &quot;&quot;, .x))) </code></pre>
 <hr />
-<pre class="r"><code>names(d50[[1]])</code></pre>
-<pre><code>##   [1] &quot;Field&quot;               &quot;Rank&quot;                &quot;Gender&quot;             
-##   [4] &quot;Research&quot;            &quot;Support&quot;             &quot;F1&quot;                 
-##   [7] &quot;F2&quot;                  &quot;F3&quot;                  &quot;F4&quot;                 
-##  [10] &quot;F5&quot;                  &quot;F6&quot;                  &quot;F7&quot;                 
-##  [13] &quot;F8&quot;                  &quot;F9&quot;                  &quot;F10&quot;                
-##  [16] &quot;F11&quot;                 &quot;F12&quot;                 &quot;F13&quot;                
-##  [19] &quot;F14&quot;                 &quot;F15&quot;                 &quot;F16&quot;                
-##  [22] &quot;F17&quot;                 &quot;F18&quot;                 &quot;F19&quot;                
-##  [25] &quot;F20&quot;                 &quot;F21&quot;                 &quot;F22&quot;                
-##  [28] &quot;F23&quot;                 &quot;F24&quot;                 &quot;F25&quot;                
-##  [31] &quot;F26&quot;                 &quot;F27&quot;                 &quot;F28&quot;                
-##  [34] &quot;F29&quot;                 &quot;F30&quot;                 &quot;F31&quot;                
-##  [37] &quot;F32&quot;                 &quot;F33&quot;                 &quot;F34&quot;                
-##  [40] &quot;F35&quot;                 &quot;F36&quot;                 &quot;F37&quot;                
-##  [43] &quot;F38&quot;                 &quot;F39&quot;                 &quot;F40&quot;                
-##  [46] &quot;F41&quot;                 &quot;F42&quot;                 &quot;F43&quot;                
-##  [49] &quot;F44&quot;                 &quot;F45&quot;                 &quot;F46&quot;                
-##  [52] &quot;F47&quot;                 &quot;F48&quot;                 &quot;F49&quot;                
-##  [55] &quot;F50&quot;                 &quot;F51&quot;                 &quot;F52&quot;                
-##  [58] &quot;F53&quot;                 &quot;F54&quot;                 &quot;F55&quot;                
-##  [61] &quot;F56&quot;                 &quot;F57&quot;                 &quot;F58&quot;                
-##  [64] &quot;F59&quot;                 &quot;F60&quot;                 &quot;F61&quot;                
-##  [67] &quot;F62&quot;                 &quot;F63&quot;                 &quot;F64&quot;                
-##  [70] &quot;F65&quot;                 &quot;F66&quot;                 &quot;F67&quot;                
-##  [73] &quot;F68&quot;                 &quot;F69&quot;                 &quot;F70&quot;                
-##  [76] &quot;F71&quot;                 &quot;F72&quot;                 &quot;F73&quot;                
-##  [79] &quot;F74&quot;                 &quot;F75&quot;                 &quot;RDisclFunds_raw&quot;    
-##  [82] &quot;RCorrectPub_raw&quot;     &quot;RAuthorship_raw&quot;     &quot;ROpenData_raw&quot;      
-##  [85] &quot;RKeepRecord_raw&quot;     &quot;RPreReg_raw&quot;         &quot;RDataManage_raw&quot;    
-##  [88] &quot;ROpenAccess_raw&quot;     &quot;RCiteSource_raw&quot;     &quot;ROpenCode_raw&quot;      
-##  [91] &quot;RErrorCheck_raw&quot;     &quot;QAttention_raw&quot;      &quot;QSupervision_raw&quot;   
-##  [94] &quot;QResDesign_raw&quot;      &quot;QUnfairRev_raw&quot;      &quot;QUnsubstClaims_raw&quot; 
-##  [97] &quot;QCiteSource_raw&quot;     &quot;QResNotes_raw&quot;       &quot;QConcealDetails_raw&quot;
-## [100] &quot;QNoReSubmit_raw&quot;     &quot;QConcealFlaws_raw&quot;   &quot;QSelectCites_raw&quot;   
-## [103] &quot;RRfabr&quot;              &quot;RRfals&quot;              &quot;RDisclFunds&quot;        
-## [106] &quot;RCorrectPub&quot;         &quot;RAuthorship&quot;         &quot;ROpenData&quot;          
-## [109] &quot;RKeepRecord&quot;         &quot;RPreReg&quot;             &quot;RDataManage&quot;        
-## [112] &quot;ROpenAccess&quot;         &quot;RCiteSource&quot;         &quot;ROpenCode&quot;          
-## [115] &quot;RErrorCheck&quot;         &quot;QAttention&quot;          &quot;QSupervision&quot;       
-## [118] &quot;QResDesign&quot;          &quot;QUnfairRev&quot;          &quot;QUnsubstClaims&quot;     
-## [121] &quot;QCiteSource&quot;         &quot;QResNotes&quot;           &quot;QConcealDetails&quot;    
-## [124] &quot;QNoReSubmit&quot;         &quot;QConcealFlaws&quot;       &quot;QSelectCites&quot;</code></pre>
-<div id="total-scores-rrpqrps" class="section level2">
-<h2>Total scores RRP/QRP’s</h2>
-<p>Computation of the total scores on RRP’s and QRP’s:</p>
+<div id="mean-scores-rrpqrps" class="section level2">
+<h2>Mean scores RRP/QRP’s</h2>
+<p>Computation of the mean score scores on the RRPs and the QRPs:</p>
 <ul>
 <li><p>“RRP”: average score on RRP’s, with <code>NA</code> with one or more score missing (Not Available)</p></li>
 <li><p>“QRP”: average score on QRP’s, with <code>NA</code> with one or more score missing (Not Available)</p></li>
@@ -1786,21 +1738,22 @@ names(d50[[1]])</code></pre>
 <div id="at-least-one-qrp" class="section level2">
 <h2>At least one QRP</h2>
 <ul>
-<li>“QRP1”: 1 if score 7 on at least one QRP, and 0 otherwise</li>
+<li>“QRP_1”: takes value 1 if at any of the QRPs has a score &gt; 4, and 0 otherwise</li>
 </ul>
 <pre class="r"><code>d50 &lt;- d50 %&gt;% 
   map(~ .x %&gt;% 
-        mutate(QRP_1 = rowSums(cbind(!!!syms(qrp)) == 7)) %&gt;% 
+        mutate(QRP_1 = rowSums(cbind(!!!syms(qrp)) &gt; 4)) %&gt;% 
         mutate(QRP_1 = if_else(QRP_1 == 0, 0, 1)))</code></pre>
 <hr />
 </div>
 <div id="explanatory-variable-scales" class="section level2">
 <h2>Explanatory variable scales</h2>
-<p>Explanatory variables scales are computed as the 1st component of the PCA of the corresponding items.</p>
-<p>Instead of two, single scales are composed for:</p>
+<p>Explanatory variables scales are computed as the 1st component of the PCA of the corresponding items, where:</p>
 <ul>
-<li><p>Mentoring (Responsible + Survival)</p></li>
-<li><p>Organizational Justice (Distributional + Procedural)</p></li>
+<li><p>the component score are based on the pairwise correlations between the items</p></li>
+<li><p>the component scores are a weighed average of the item scores</p></li>
+<li><p>with the weights determined such that the scale optimally discriminates between subjects</p></li>
+<li><p>cases with an Not Applicable on any of the scale items will get an <code>NA</code> (missing value) score on the corresponding scale</p></li>
 </ul>
 <pre class="r"><code>d50 &lt;- d50 %&gt;% 
   map(~ .x %&gt;% 
@@ -1828,12 +1781,50 @@ names(d50[[1]])</code></pre>
                principal(cbind(F70, F71, F72, F73, F74, F75)) %&gt;% 
                  pluck(&quot;scores&quot;) %&gt;% as.data.frame %&gt;% 
                  rename(DetectRev = &quot;PC1&quot;),
-               principal(cbind(F34, F35, F36, F37, F38, F39, F46, F47, F48, F49, F50, F51)) %&gt;% 
+               principal(cbind(F34, F35, F36, F37, F38, F39, 
+                               F46, F47, F48, F49, F50, F51)) %&gt;% 
                  pluck(&quot;scores&quot;) %&gt;% as.data.frame %&gt;% 
                  rename(Mentoring = &quot;PC1&quot;), 
-               principal(cbind(F52, F53, F54, F55, F56, F57, F58, F59, F60, F61, F62, F63)) %&gt;% 
+               principal(cbind(F52, F53, F54, F55, F56, F57, F58, F59, 
+                               F60, F61, F62, F63)) %&gt;% 
                  pluck(&quot;scores&quot;) %&gt;% as.data.frame %&gt;% 
-                 rename(OrgJust = &quot;PC1&quot;)))</code></pre>
+                 rename(OrgJust = &quot;PC1&quot;),
+               principal(cbind(F34, F35, F36, F37, F38, F39)) %&gt;%
+                 pluck(&quot;scores&quot;) %&gt;% as.data.frame %&gt;% 
+                 rename(MentSurv = &quot;PC1&quot;),
+               principal(cbind(F46, F47, F48, F49, F50, F51)) %&gt;%
+                 pluck(&quot;scores&quot;) %&gt;% as.data.frame %&gt;% 
+                 rename(MentResp = &quot;PC1&quot;),
+               principal(cbind(F52, F53, F54, F55, F56, F57)) %&gt;%
+                 pluck(&quot;scores&quot;) %&gt;% as.data.frame %&gt;% 
+                 rename(DistJust = &quot;PC1&quot;),
+               principal(cbind(F58, F59, F60, F61, F62, F63)) %&gt;%
+                 pluck(&quot;scores&quot;) %&gt;% as.data.frame %&gt;% 
+                 rename(ProcJust = &quot;PC1&quot;)
+               ))</code></pre>
+<p>In contrast to the original data analysis plan 10 instead 12 scales are computed</p>
+<ul>
+<li><p><code>Mentoring</code> is composed of the 12 items of the original scales <code>RespMent</code> + <code>SurvMent</code></p></li>
+<li><p><code>OrgJust</code> is composed of the 12 items of the original scales <code>DistJust</code> + <code>ProcJust</code></p></li>
+</ul>
+<p>The reason for this is that the original scales are highly correlated (see below), which</p>
+<ul>
+<li><p>means that they measure similar constructs and</p></li>
+<li><p>that including these scales separately in regression analyses may result in multicollinearity problems</p></li>
+</ul>
+<pre class="r"><code>d50[[1]] %$% cor(cbind(OrgJust, DistJust, ProcJust)) %&gt;% round(., 2)</code></pre>
+<pre><code>##          OrgJust DistJust ProcJust
+## OrgJust        1       NA       NA
+## DistJust      NA        1       NA
+## ProcJust      NA       NA        1</code></pre>
+<pre class="r"><code>d50[[1]] %$% cor(cbind(Mentoring, MentSurv, MentResp)) %&gt;% round(., 2)</code></pre>
+<pre><code>##           Mentoring MentSurv MentResp
+## Mentoring      1.00     0.91     0.92
+## MentSurv       0.91     1.00     0.68
+## MentResp       0.92     0.68     1.00</code></pre>
+<p>Deleting the 4 superfluous scale</p>
+<pre class="r"><code>d50 &lt;- d50 %&gt;% 
+  map(select, - MentSurv, -MentResp, -DistJust, - ProcJust)</code></pre>
 <hr />
 </div>
 <div id="replacement-scale-missings" class="section level2">
@@ -1842,15 +1833,22 @@ names(d50[[1]])</code></pre>
 <pre class="r"><code>d50 &lt;- d50 %&gt;% 
   map(~ .x %&gt;% 
         mutate_at(vars(F28:F75), list(s = ~ scale(.))) %&gt;% 
-        mutate(m         = rowMeans(cbind(F28_s, F29_s, F30_s, F31_s, F32_s, F33_s), na.rm = T),
+        mutate(m         = rowMeans(cbind(F28_s, F29_s, F30_s, F31_s, F32_s, F33_s), 
+                                    na.rm = T),
                FundPress = if_else(is.na(FundPress), m, FundPress),
-               m         = rowMeans(cbind(F64_s, F65_s, F66_s, F67_s, F68_s, F69_s), na.rm = T),
+               m         = rowMeans(cbind(F64_s, F65_s, F66_s, F67_s, F68_s, F69_s), 
+                                    na.rm = T),
                DetectCol = if_else(is.na(DetectCol), m, DetectCol),
-               m         = rowMeans(cbind(F70_s, F71_s, F72_s, F73_s, F74_s, F75_s), na.rm = T),
+               m         = rowMeans(cbind(F70_s, F71_s, F72_s, F73_s, F74_s, F75_s), 
+                                    na.rm = T),
                DetectRev = if_else(is.na(DetectRev), m, DetectRev),
-               m         = rowMeans(cbind(F34_s, F35_s, F36_s, F37_s, F38_s, F39_s, F46_s, F47_s, F48_s, F49_s, F50_s, F51_s), na.rm = T),
+               m         = rowMeans(cbind(F34_s, F35_s, F36_s, F37_s, F38_s, F39_s, 
+                                          F46_s, F47_s, F48_s, F49_s, F50_s, F51_s), 
+                                    na.rm = T),
                Mentoring = if_else(is.na(Mentoring), m, Mentoring),
-               m         = rowMeans(cbind(F52_s, F53_s, F54_s, F55_s, F56_s, F57_s, F58_s, F59_s, F60_s, F61_s, F62_s, F63_s),  na.rm = T),
+               m         = rowMeans(cbind(F52_s, F53_s, F54_s, F55_s, F56_s, F57_s, 
+                                          F58_s, F59_s, F60_s, F61_s, F62_s, F63_s),  
+                                    na.rm = T),
                OrgJust   = if_else(is.na(OrgJust), m, OrgJust)) %&gt;% 
         select(-(F28_s:F75_s), -m))</code></pre>
 </div>
@@ -1906,8 +1904,9 @@ names(d50[[1]])</code></pre>
 ## [136] &quot;DetectCol&quot;           &quot;DetectRev&quot;           &quot;Mentoring&quot;          
 ## [139] &quot;OrgJust&quot;</code></pre>
 </div>
-<div id="summary-data-set" class="section level1">
-<h1>Summary data set</h1>
+<div id="data-summary" class="section level1">
+<h1>Data summary</h1>
+<p>Summary of the 1st of the 50 data sets.</p>
 <pre class="r"><code>summary(d50[[1]])</code></pre>
 <pre><code>##         Field           Rank              Gender     Research   Support   
 ##  Soc &amp; Beh :1965   PhD    :2013   Undisclosed: 116   Yes:6083   Yes:3270  
@@ -2103,26 +2102,26 @@ names(d50[[1]])</code></pre>
 ##                                                                     
 ##      RRfals        RDisclFunds     RCorrectPub     RAuthorship   
 ##  Min.   :0.0000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
-##  1st Qu.:0.0000   1st Qu.:7.000   1st Qu.:7.000   1st Qu.:5.000  
-##  Median :0.0000   Median :7.000   Median :7.000   Median :6.000  
-##  Mean   :0.1952   Mean   :6.716   Mean   :6.526   Mean   :5.796  
+##  1st Qu.:0.0000   1st Qu.:6.000   1st Qu.:1.000   1st Qu.:5.000  
+##  Median :0.0000   Median :7.000   Median :1.000   Median :6.000  
+##  Mean   :0.1952   Mean   :5.936   Mean   :3.541   Mean   :5.385  
 ##  3rd Qu.:0.0000   3rd Qu.:7.000   3rd Qu.:7.000   3rd Qu.:7.000  
 ##  Max.   :1.0000   Max.   :7.000   Max.   :7.000   Max.   :7.000  
 ##                                                                  
 ##    ROpenData      RKeepRecord       RPreReg       RDataManage   
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
-##  1st Qu.:5.000   1st Qu.:4.000   1st Qu.:3.000   1st Qu.:6.000  
-##  Median :6.000   Median :5.000   Median :6.000   Median :7.000  
-##  Mean   :5.543   Mean   :4.793   Mean   :4.992   Mean   :6.111  
-##  3rd Qu.:7.000   3rd Qu.:6.000   3rd Qu.:7.000   3rd Qu.:7.000  
+##  1st Qu.:4.000   1st Qu.:3.000   1st Qu.:1.000   1st Qu.:5.000  
+##  Median :5.000   Median :5.000   Median :1.000   Median :6.000  
+##  Mean   :4.736   Mean   :4.181   Mean   :2.661   Mean   :5.447  
+##  3rd Qu.:6.000   3rd Qu.:6.000   3rd Qu.:5.000   3rd Qu.:7.000  
 ##  Max.   :7.000   Max.   :7.000   Max.   :7.000   Max.   :7.000  
 ##                                                                 
 ##   ROpenAccess     RCiteSource      ROpenCode      RErrorCheck   
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
-##  1st Qu.:5.000   1st Qu.:6.000   1st Qu.:3.000   1st Qu.:6.000  
-##  Median :6.000   Median :7.000   Median :6.000   Median :6.000  
-##  Mean   :5.383   Mean   :6.662   Mean   :4.879   Mean   :6.222  
-##  3rd Qu.:7.000   3rd Qu.:7.000   3rd Qu.:7.000   3rd Qu.:7.000  
+##  1st Qu.:4.000   1st Qu.:6.000   1st Qu.:1.000   1st Qu.:6.000  
+##  Median :5.000   Median :7.000   Median :3.000   Median :6.000  
+##  Mean   :4.761   Mean   :6.457   Mean   :3.224   Mean   :5.959  
+##  3rd Qu.:6.000   3rd Qu.:7.000   3rd Qu.:5.000   3rd Qu.:7.000  
 ##  Max.   :7.000   Max.   :7.000   Max.   :7.000   Max.   :7.000  
 ##                                                                 
 ##    QAttention     QSupervision     QResDesign      QUnfairRev   
@@ -2143,18 +2142,18 @@ names(d50[[1]])</code></pre>
 ##                                                                                
 ##  QConcealFlaws    QSelectCites      RRP_ave         QRP_ave     
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
-##  1st Qu.:1.000   1st Qu.:1.000   1st Qu.:5.273   1st Qu.:1.455  
-##  Median :2.000   Median :2.000   Median :5.818   Median :1.818  
-##  Mean   :2.359   Mean   :2.394   Mean   :5.784   Mean   :1.915  
-##  3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:6.364   3rd Qu.:2.273  
+##  1st Qu.:1.000   1st Qu.:1.000   1st Qu.:4.182   1st Qu.:1.455  
+##  Median :2.000   Median :2.000   Median :4.818   Median :1.818  
+##  Mean   :2.359   Mean   :2.394   Mean   :4.753   Mean   :1.915  
+##  3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:5.455   3rd Qu.:2.273  
 ##  Max.   :7.000   Max.   :7.000   Max.   :7.000   Max.   :5.636  
 ##                                                                 
 ##      QRP_1           SciNorms         PeerNorms          WorkPress      
 ##  Min.   :0.0000   Min.   :-6.1555   Min.   :-3.35995   Min.   :-2.5252  
 ##  1st Qu.:0.0000   1st Qu.:-0.5269   1st Qu.:-0.68432   1st Qu.:-0.7357  
-##  Median :0.0000   Median : 0.2097   Median : 0.02695   Median : 0.1179  
-##  Mean   :0.1459   Mean   : 0.0000   Mean   : 0.00000   Mean   : 0.0000  
-##  3rd Qu.:0.0000   3rd Qu.: 0.7668   3rd Qu.: 0.68759   3rd Qu.: 0.8196  
+##  Median :1.0000   Median : 0.2097   Median : 0.02695   Median : 0.1179  
+##  Mean   :0.5133   Mean   : 0.0000   Mean   : 0.00000   Mean   : 0.0000  
+##  3rd Qu.:1.0000   3rd Qu.: 0.7668   3rd Qu.: 0.68759   3rd Qu.: 0.8196  
 ##  Max.   :1.0000   Max.   : 1.3091   Max.   : 2.86300   Max.   : 1.8096  
 ##                                                                         
 ##     PubPress          FundPress         Competitive         DetectCol       
@@ -2193,7 +2192,7 @@ names(d50[[1]])</code></pre>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] psych_2.0.12   mice_3.13.0    magrittr_2.0.1 purrr_0.3.4    dplyr_1.0.5   
+## [1] psych_2.0.12   mice_3.13.5    magrittr_2.0.1 purrr_0.3.4    dplyr_1.0.5   
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] Rcpp_1.0.6        pillar_1.5.1      compiler_4.0.4    tools_4.0.4      
@@ -2201,10 +2200,10 @@ names(d50[[1]])</code></pre>
 ##  [9] tibble_3.1.0      debugme_1.1.0     lattice_0.20-41   pkgconfig_2.0.3  
 ## [13] rlang_0.4.10      DBI_1.1.1         parallel_4.0.4    yaml_2.2.1       
 ## [17] xfun_0.21         stringr_1.4.0     knitr_1.31        generics_0.1.0   
-## [21] vctrs_0.3.6       grid_4.0.4        tidyselect_1.1.0  glue_1.4.2       
+## [21] vctrs_0.3.7       grid_4.0.4        tidyselect_1.1.0  glue_1.4.2       
 ## [25] R6_2.5.0          fansi_0.4.2       rmarkdown_2.6     tidyr_1.1.3      
 ## [29] backports_1.2.1   ellipsis_0.3.1    htmltools_0.5.1.1 assertthat_0.2.1 
-## [33] mnormt_2.0.2      utf8_1.1.4        stringi_1.5.3     broom_0.7.5      
+## [33] mnormt_2.0.2      utf8_1.2.1        stringi_1.5.3     broom_0.7.6      
 ## [37] tmvnsim_1.0-2     crayon_1.4.1</code></pre>
 </div>
 

@@ -31,11 +31,9 @@ h3 { /* Header 3 */
   font-size: 18px;
 }
 code.r{ /* Code block */
-  font-size: 12px;
+  font-size: 8px;
 }
-pre { /* Code block - determines code spacing between lines */
-  font-size: 14px;
-}
+
 </style>
 
 
@@ -68,7 +66,7 @@ load("Workspaces/3. Data imputation.Rdata")
 
 # Make data object
 
-The 50 imputed data sets are stored in the list `d50`.
+Storing the 50 imputed data sets in the list `d50`.
 
 ```{r}
 d50 <- imp %>% 
@@ -90,6 +88,8 @@ d50 <- d50 %>%
 
 # Names RRP's and QRP's
 
+Vectors that will be used to rename RP1 to RP22 in intelligible names for the RPPs (starting with the letter R) and QRPs (starting with the letter Q)
+
 ```{r}
 rrp <- c("RDisclFunds", "RCorrectPub", "RAuthorship", "ROpenData", "RKeepRecord", 
          "RPreReg", "RDataManage", "ROpenAccess", "RCiteSource", "ROpenCode", "RErrorCheck")
@@ -106,9 +106,9 @@ Order data sets on (old names in parenthesis):
 
 2. Explanatory variables (75): ordered from 1 to 75
 
-3. RRP variables (11): names in `rrp` (RP1, RP2, RP4, RP6, RP9, RP12, RP15, RP16, RP17, RP19, RP21)
+3. RRP variables (11): names in `rrp` with suffix `_raw` to indicate that Not Applicable are coded 0.
 
-4. QRP variables (11): names in `rrp`  (RP3, RP5, RP7, RP8, RP10, RP11, RP13, RP14, RP18, RP20, RP22)
+4. QRP variables (11): names in `rrp` with suffix `_raw` to indicate that Not Applicable are coded 0.
 
 5. RR variables (2): "RRfabr" (RR1) and "RRfals" (RR2)
 
@@ -133,7 +133,7 @@ names(d50[[1]])
 
 ## Background variables
 
-Shorten labels of background variables for use in tables and graphs.
+Shortening labels of background variables for use in tables and graphs.
 
 ```{r}
 d50 <- d50 %>%  
@@ -176,7 +176,7 @@ d50 <- d50 %>%
 ## RR variables
 
 
-Recoding the answers  "triangle"  and "circle" into 0 (no) and 1 (yes)
+Recoding the answers "triangle"  and "circle" of the randomized response items into 0 (no) and 1 (yes).
 
 ```{r}
 d50 <- d50 %>% 
@@ -191,16 +191,12 @@ d50 <- d50 %>%
 
 # Adding new variables
 
- Recoding NA's in RRP/QRP's
-
-- For RRP's: 0 (Not Applicable) changed into 7 (Always)
-
-- For QRP's: 0 (Not Applicable) changed into 1 (Never)
+Recoding the 0 scores (Not Applicable) in the raw RRP/QRP variables into 1 ("Never")
 
 ```{r}
 d50 <- d50 %>% 
   map(~ .x %>% 
-        mutate_at(vars(!!!syms(paste0(rrp, "_raw"))), list(r = ~ recode(., `0` = 7))) %>% 
+        mutate_at(vars(!!!syms(paste0(rrp, "_raw"))), list(r = ~ recode(., `0` = 1))) %>% 
         rename_at(vars(ends_with(("_raw_r"))), ~ gsub("_raw_r", "", .x)) %>% 
         mutate_at(vars(!!!syms(paste0(qrp, "_raw"))), list(q = ~ recode(., `0` = 1))) %>% 
         rename_at(vars(ends_with(("_raw_q"))), ~ gsub("_raw_q", "", .x))) 
@@ -208,14 +204,11 @@ d50 <- d50 %>%
 
 ---
 
-```{r}
-names(d50[[1]])
-```
 
 
-## Total scores RRP/QRP's
+## Mean scores RRP/QRP's
 
-Computation of the total scores on RRP's and QRP's:
+Computation of the mean score scores on the RRPs and the QRPs:
 
 - "RRP": average score on RRP's, with `NA` with one or more score missing (Not Available) 
 
@@ -234,12 +227,12 @@ d50 <- d50 %>%
 
 ## At least one QRP
 
-- "QRP1": 1 if score 7 on at least one QRP, and 0 otherwise 
+- "QRP_1": takes value 1 if at any of the QRPs has a score > 4, and 0 otherwise 
 
 ```{r}
 d50 <- d50 %>% 
   map(~ .x %>% 
-        mutate(QRP_1 = rowSums(cbind(!!!syms(qrp)) == 7)) %>% 
+        mutate(QRP_1 = rowSums(cbind(!!!syms(qrp)) > 4)) %>% 
         mutate(QRP_1 = if_else(QRP_1 == 0, 0, 1)))
 ```
 
@@ -249,13 +242,17 @@ d50 <- d50 %>%
 
 ## Explanatory variable scales
 
-Explanatory variables scales are computed as the 1st component of the PCA of the corresponding items. 
+Explanatory variables scales are computed as the 1st component of the PCA of the corresponding items, where: 
 
-Instead of two, single scales are composed for: 
+- the component score are based on the pairwise correlations between the items
 
-- Mentoring  (Responsible + Survival)
+- the component scores are a weighed average of the item scores
 
-- Organizational Justice (Distributional + Procedural)
+- with the weights determined such that the scale optimally discriminates between subjects
+
+- cases with an Not Applicable on any of the scale items will get an `NA` (missing value) score on the corresponding scale
+
+
 
 
 
@@ -286,14 +283,58 @@ d50 <- d50 %>%
                principal(cbind(F70, F71, F72, F73, F74, F75)) %>% 
                  pluck("scores") %>% as.data.frame %>% 
                  rename(DetectRev = "PC1"),
-               principal(cbind(F34, F35, F36, F37, F38, F39, F46, F47, F48, F49, F50, F51)) %>% 
+               principal(cbind(F34, F35, F36, F37, F38, F39, 
+                               F46, F47, F48, F49, F50, F51)) %>% 
                  pluck("scores") %>% as.data.frame %>% 
                  rename(Mentoring = "PC1"), 
-               principal(cbind(F52, F53, F54, F55, F56, F57, F58, F59, F60, F61, F62, F63)) %>% 
+               principal(cbind(F52, F53, F54, F55, F56, F57, F58, F59, 
+                               F60, F61, F62, F63)) %>% 
                  pluck("scores") %>% as.data.frame %>% 
-                 rename(OrgJust = "PC1")))
+                 rename(OrgJust = "PC1"),
+               principal(cbind(F34, F35, F36, F37, F38, F39)) %>%
+                 pluck("scores") %>% as.data.frame %>% 
+                 rename(MentSurv = "PC1"),
+               principal(cbind(F46, F47, F48, F49, F50, F51)) %>%
+                 pluck("scores") %>% as.data.frame %>% 
+                 rename(MentResp = "PC1"),
+               principal(cbind(F52, F53, F54, F55, F56, F57)) %>%
+                 pluck("scores") %>% as.data.frame %>% 
+                 rename(DistJust = "PC1"),
+               principal(cbind(F58, F59, F60, F61, F62, F63)) %>%
+                 pluck("scores") %>% as.data.frame %>% 
+                 rename(ProcJust = "PC1")
+               ))
 
 ```
+
+
+In contrast to the original data analysis plan 10 instead 12 scales are computed
+
+- `Mentoring`  is composed of the 12 items of the original scales `RespMent` + `SurvMent`
+
+- `OrgJust` is composed of the 12 items of the original scales `DistJust` + `ProcJust`
+
+The reason for this is that the original scales are highly correlated (see below), which 
+
+- means that they measure similar constructs and
+
+- that including these scales separately in regression analyses may result in multicollinearity problems
+
+```{r}
+d50[[1]] %$% cor(cbind(OrgJust, DistJust, ProcJust)) %>% round(., 2)
+```
+
+```{r}
+d50[[1]] %$% cor(cbind(Mentoring, MentSurv, MentResp)) %>% round(., 2)
+```
+
+Deleting the 4 superfluous scale
+
+```{r}
+d50 <- d50 %>% 
+  map(select, - MentSurv, -MentResp, -DistJust, - ProcJust)
+```
+
 
 ---
 
@@ -306,15 +347,22 @@ Missing values on the scales due to Not Applicables are replaced by the means of
 d50 <- d50 %>% 
   map(~ .x %>% 
         mutate_at(vars(F28:F75), list(s = ~ scale(.))) %>% 
-        mutate(m         = rowMeans(cbind(F28_s, F29_s, F30_s, F31_s, F32_s, F33_s), na.rm = T),
+        mutate(m         = rowMeans(cbind(F28_s, F29_s, F30_s, F31_s, F32_s, F33_s), 
+                                    na.rm = T),
                FundPress = if_else(is.na(FundPress), m, FundPress),
-               m         = rowMeans(cbind(F64_s, F65_s, F66_s, F67_s, F68_s, F69_s), na.rm = T),
+               m         = rowMeans(cbind(F64_s, F65_s, F66_s, F67_s, F68_s, F69_s), 
+                                    na.rm = T),
                DetectCol = if_else(is.na(DetectCol), m, DetectCol),
-               m         = rowMeans(cbind(F70_s, F71_s, F72_s, F73_s, F74_s, F75_s), na.rm = T),
+               m         = rowMeans(cbind(F70_s, F71_s, F72_s, F73_s, F74_s, F75_s), 
+                                    na.rm = T),
                DetectRev = if_else(is.na(DetectRev), m, DetectRev),
-               m         = rowMeans(cbind(F34_s, F35_s, F36_s, F37_s, F38_s, F39_s, F46_s, F47_s, F48_s, F49_s, F50_s, F51_s), na.rm = T),
+               m         = rowMeans(cbind(F34_s, F35_s, F36_s, F37_s, F38_s, F39_s, 
+                                          F46_s, F47_s, F48_s, F49_s, F50_s, F51_s), 
+                                    na.rm = T),
                Mentoring = if_else(is.na(Mentoring), m, Mentoring),
-               m         = rowMeans(cbind(F52_s, F53_s, F54_s, F55_s, F56_s, F57_s, F58_s, F59_s, F60_s, F61_s, F62_s, F63_s),  na.rm = T),
+               m         = rowMeans(cbind(F52_s, F53_s, F54_s, F55_s, F56_s, F57_s, 
+                                          F58_s, F59_s, F60_s, F61_s, F62_s, F63_s),  
+                                    na.rm = T),
                OrgJust   = if_else(is.na(OrgJust), m, OrgJust)) %>% 
         select(-(F28_s:F75_s), -m))
 ```
@@ -326,7 +374,9 @@ d50 <- d50 %>%
 names(d50[[1]])
 ```
 
-# Summary data set 
+# Data summary 
+
+Summary of the 1st of the 50 data sets.
 
 ```{r}
 summary(d50[[1]])

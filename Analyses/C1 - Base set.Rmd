@@ -78,7 +78,7 @@ fit %>%
 
 fit %>% 
   pool %>% 
-  summary()
+  summary(conf.int = TRUE)
 ```
 
 --- 
@@ -93,7 +93,7 @@ fit %>%
 
 fit %>% 
   pool %>% 
-  summary()
+  summary(conf.int = TRUE)
 ```
 
 ---
@@ -108,7 +108,7 @@ fit %>%
 
 fit %>% 
   pool %>% 
-  summary()
+  summary(conf.int = TRUE)
 ```
 
 ---

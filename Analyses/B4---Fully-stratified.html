@@ -1688,115 +1688,115 @@ library(labelled) # Advanced labelling</code></pre>
 <p>The relative frequencies for the 144 cells in Field x Rank x Gender x Research x Support are</p>
 <pre class="r"><code>d50[[1]] %$% # Take the first listed dimension because Gender does not differ
   table(Field, Rank, Gender, Research, Support) %&gt;% 
-  prop.table() %&gt;% 
+  prop.table(margin = c(&quot;Field&quot;, &quot;Gender&quot;, &quot;Research&quot;, &quot;Support&quot;)) %&gt;% 
   round(4)</code></pre>
 <pre><code>## , , Gender = Undisclosed, Research = Yes, Support = Yes
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0004  0.0009 0.0004
-##   Arts &amp; Hum 0.0001  0.0001 0.0001
-##   Eng &amp; Nat  0.0000  0.0001 0.0001
-##   Bio &amp; Life 0.0004  0.0006 0.0015
+##   Soc &amp; Beh  0.2500  0.5000 0.2500
+##   Arts &amp; Hum 0.3333  0.3333 0.3333
+##   Eng &amp; Nat  0.0000  0.5000 0.5000
+##   Bio &amp; Life 0.1765  0.2353 0.5882
 ## 
 ## , , Gender = Female, Research = Yes, Support = Yes
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0296  0.0332 0.0147
-##   Arts &amp; Hum 0.0035  0.0073 0.0025
-##   Eng &amp; Nat  0.0031  0.0053 0.0019
-##   Bio &amp; Life 0.0661  0.0374 0.0188
+##   Soc &amp; Beh  0.3826  0.4280 0.1894
+##   Arts &amp; Hum 0.2637  0.5495 0.1868
+##   Eng &amp; Nat  0.3000  0.5143 0.1857
+##   Bio &amp; Life 0.5402  0.3061 0.1537
 ## 
 ## , , Gender = Male, Research = Yes, Support = Yes
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0134  0.0255 0.0216
-##   Arts &amp; Hum 0.0032  0.0048 0.0054
-##   Eng &amp; Nat  0.0078  0.0109 0.0073
-##   Bio &amp; Life 0.0299  0.0371 0.0377
+##   Soc &amp; Beh  0.2209  0.4223 0.3568
+##   Arts &amp; Hum 0.2391  0.3587 0.4022
+##   Eng &amp; Nat  0.2994  0.4181 0.2825
+##   Bio &amp; Life 0.2857  0.3543 0.3599
 ## 
 ## , , Gender = Undisclosed, Research = No, Support = Yes
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0001  0.0001 0.0000
-##   Arts &amp; Hum 0.0004  0.0006 0.0001
-##   Eng &amp; Nat  0.0001  0.0004 0.0000
-##   Bio &amp; Life 0.0003  0.0000 0.0000
+##   Soc &amp; Beh  0.5000  0.5000 0.0000
+##   Arts &amp; Hum 0.3750  0.5000 0.1250
+##   Eng &amp; Nat  0.2500  0.7500 0.0000
+##   Bio &amp; Life 1.0000  0.0000 0.0000
 ## 
 ## , , Gender = Female, Research = No, Support = Yes
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0022  0.0016 0.0009
-##   Arts &amp; Hum 0.0018  0.0029 0.0010
-##   Eng &amp; Nat  0.0013  0.0018 0.0000
-##   Bio &amp; Life 0.0037  0.0004 0.0000
+##   Soc &amp; Beh  0.4688  0.3438 0.1875
+##   Arts &amp; Hum 0.3077  0.5128 0.1795
+##   Eng &amp; Nat  0.4286  0.5714 0.0000
+##   Bio &amp; Life 0.8929  0.1071 0.0000
 ## 
 ## , , Gender = Male, Research = No, Support = Yes
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0015  0.0018 0.0028
-##   Arts &amp; Hum 0.0021  0.0028 0.0032
-##   Eng &amp; Nat  0.0037  0.0046 0.0022
-##   Bio &amp; Life 0.0012  0.0007 0.0004
+##   Soc &amp; Beh  0.2439  0.2927 0.4634
+##   Arts &amp; Hum 0.2545  0.3455 0.4000
+##   Eng &amp; Nat  0.3521  0.4366 0.2113
+##   Bio &amp; Life 0.5000  0.3125 0.1875
 ## 
 ## , , Gender = Undisclosed, Research = Yes, Support = No
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0001  0.0012 0.0006
-##   Arts &amp; Hum 0.0003  0.0003 0.0001
-##   Eng &amp; Nat  0.0003  0.0009 0.0007
-##   Bio &amp; Life 0.0003  0.0016 0.0016
+##   Soc &amp; Beh  0.0769  0.6154 0.3077
+##   Arts &amp; Hum 0.4000  0.4000 0.2000
+##   Eng &amp; Nat  0.1538  0.4615 0.3846
+##   Bio &amp; Life 0.0833  0.4583 0.4583
 ## 
 ## , , Gender = Female, Research = Yes, Support = No
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0172  0.0326 0.0147
-##   Arts &amp; Hum 0.0046  0.0073 0.0048
-##   Eng &amp; Nat  0.0103  0.0164 0.0069
-##   Bio &amp; Life 0.0194  0.0321 0.0173
+##   Soc &amp; Beh  0.2665  0.5057 0.2278
+##   Arts &amp; Hum 0.2719  0.4386 0.2895
+##   Eng &amp; Nat  0.3057  0.4891 0.2052
+##   Bio &amp; Life 0.2814  0.4670 0.2516
 ## 
 ## , , Gender = Male, Research = Yes, Support = No
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0119  0.0239 0.0294
-##   Arts &amp; Hum 0.0016  0.0085 0.0059
-##   Eng &amp; Nat  0.0247  0.0365 0.0339
-##   Bio &amp; Life 0.0116  0.0346 0.0455
+##   Soc &amp; Beh  0.1824  0.3671 0.4505
+##   Arts &amp; Hum 0.1009  0.5321 0.3670
+##   Eng &amp; Nat  0.2593  0.3843 0.3565
+##   Bio &amp; Life 0.1264  0.3776 0.4960
 ## 
 ## , , Gender = Undisclosed, Research = No, Support = No
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0000  0.0003 0.0000
-##   Arts &amp; Hum 0.0000  0.0004 0.0001
-##   Eng &amp; Nat  0.0004  0.0000 0.0001
-##   Bio &amp; Life 0.0000  0.0001 0.0000
+##   Soc &amp; Beh  0.0000  1.0000 0.0000
+##   Arts &amp; Hum 0.0000  0.7500 0.2500
+##   Eng &amp; Nat  0.7500  0.0000 0.2500
+##   Bio &amp; Life 0.0000  1.0000 0.0000
 ## 
 ## , , Gender = Female, Research = No, Support = No
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0010  0.0006 0.0003
-##   Arts &amp; Hum 0.0013  0.0038 0.0021
-##   Eng &amp; Nat  0.0028  0.0022 0.0016
-##   Bio &amp; Life 0.0004  0.0007 0.0000
+##   Soc &amp; Beh  0.5385  0.3077 0.1538
+##   Arts &amp; Hum 0.1837  0.5306 0.2857
+##   Eng &amp; Nat  0.4222  0.3333 0.2444
+##   Bio &amp; Life 0.3750  0.6250 0.0000
 ## 
 ## , , Gender = Male, Research = No, Support = No
 ## 
 ##             Rank
 ## Field           PhD Postdoc   Prof
-##   Soc &amp; Beh  0.0010  0.0015 0.0015
-##   Arts &amp; Hum 0.0016  0.0038 0.0044
-##   Eng &amp; Nat  0.0085  0.0094 0.0087
-##   Bio &amp; Life 0.0001  0.0010 0.0003</code></pre>
+##   Soc &amp; Beh  0.2593  0.3704 0.3704
+##   Arts &amp; Hum 0.1642  0.3881 0.4478
+##   Eng &amp; Nat  0.3204  0.3536 0.3260
+##   Bio &amp; Life 0.1000  0.7000 0.2000</code></pre>
 <hr />
 </div>
 <div id="session-info" class="section level1">
@@ -1818,7 +1818,7 @@ library(labelled) # Advanced labelling</code></pre>
 ## 
 ## other attached packages:
 ## [1] labelled_2.7.0 reshape2_1.4.4 ggplot2_3.3.3  DT_0.17        haven_2.3.1   
-## [6] purrr_0.3.4    magrittr_2.0.1 mice_3.13.0    dplyr_1.0.5   
+## [6] purrr_0.3.4    magrittr_2.0.1 mice_3.13.5    dplyr_1.0.5   
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] Rcpp_1.0.6        plyr_1.8.6        pillar_1.5.1      compiler_4.0.4   
@@ -1826,19 +1826,19 @@ library(labelled) # Advanced labelling</code></pre>
 ##  [9] evaluate_0.14     lifecycle_1.0.0   tibble_3.1.0      debugme_1.1.0    
 ## [13] lattice_0.20-41   pkgconfig_2.0.3   rlang_0.4.10      DBI_1.1.1        
 ## [17] yaml_2.2.1        xfun_0.21         withr_2.4.1       stringr_1.4.0    
-## [21] knitr_1.31        htmlwidgets_1.5.3 generics_0.1.0    vctrs_0.3.6      
+## [21] knitr_1.31        htmlwidgets_1.5.3 generics_0.1.0    vctrs_0.3.7      
 ## [25] hms_1.0.0         grid_4.0.4        tidyselect_1.1.0  glue_1.4.2       
 ## [29] R6_2.5.0          fansi_0.4.2       rmarkdown_2.6     tidyr_1.1.3      
 ## [33] scales_1.1.1      backports_1.2.1   ellipsis_0.3.1    htmltools_0.5.1.1
-## [37] assertthat_0.2.1  colorspace_2.0-0  utf8_1.1.4        stringi_1.5.3    
-## [41] munsell_0.5.0     broom_0.7.5       crayon_1.4.1</code></pre>
+## [37] assertthat_0.2.1  colorspace_2.0-0  utf8_1.2.1        stringi_1.5.3    
+## [41] munsell_0.5.0     broom_0.7.6       crayon_1.4.1</code></pre>
 <hr />
 </div>
 <div id="document-info" class="section level1">
 <h1>Document info</h1>
 <p>Signed: <a href="https://www.gerkovink.com">Gerko Vink</a>,</p>
 <pre class="r"><code>timestamp()</code></pre>
-<pre><code>## ##------ Tue Apr  6 21:06:40 2021 ------##</code></pre>
+<pre><code>## ##------ Tue Apr 13 20:37:47 2021 ------##</code></pre>
 <hr />
 <p>END of DOCUMENT</p>
 </div>

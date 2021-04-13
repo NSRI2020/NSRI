@@ -85,7 +85,7 @@ fit %>%
 # Inferences
 fit %>% 
   pool %>% 
-  summary()
+  summary(conf.int = TRUE)
 
 # model comparison
 D1(fit, base.fit)
@@ -110,7 +110,7 @@ fit %>%
 # Inferences
 fit %>% 
   pool %>% 
-  summary()
+  summary(conf.int = TRUE)
 
 # model comparison
 D1(fit, base.fit)
@@ -138,7 +138,7 @@ fit %>%
 # Inferences
 fit %>% 
   pool %>% 
-  summary()
+  summary(conf.int = TRUE)
 
 # model comparison
 D1(fit, base.fit)
