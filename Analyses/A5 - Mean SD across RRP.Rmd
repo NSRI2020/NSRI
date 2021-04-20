@@ -83,21 +83,10 @@ RRP_set <- names(raw_data[86:107])[c(1, 2, 4, 6, 9, 12, 15, 16, 17, 19, 21 )]
 ### Overall
 First, we calculate the descriptive statistics of the data **with `Not Applicable`'s**
 ```{r}
-mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
-  select(all_of(RRP_set)) %>% 
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  select(starts_with("Q")) %>% 
+  select(!contains("_")) %>%
   rowMeans(na.rm = FALSE) %>% #no missings
-  describe() %>% .[, 2:5] %>% 
-  print.data.frame()
-```
-
----
-
-Second, we print the means and SD's for the data without the rows that contain `Not Applicable`'s. 
-```{r}
-mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
-  select(all_of(RRP_set)) %>% 
-  na_if(0) %>% 
-  rowMeans(na.rm = FALSE) %>% #i.e. listwise deletion of incomplete rows
   describe() %>% .[, 2:5] %>% 
   print.data.frame()
 ```

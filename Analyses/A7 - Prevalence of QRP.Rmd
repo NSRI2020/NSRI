@@ -82,24 +82,8 @@ QRP_set <- names(raw_data[86:107])[-c(1, 2, 4, 6, 9, 12, 15, 16, 17, 19, 21 )]
 ### Overall
 First, we calculate the prevalence of any QRP **with `Not Applicable`'s**
 ```{r}
-any_obs <- function(x) !any(x > 1)
-mice::complete(imp, 1) %>% #QRP has no missings -so use 1st imputed set
-  select(all_of(QRP_set)) %>% 
-  apply(., MARGIN = 1, any_obs) %>% 
-  table() %>% prop.test %>% 
-  extract(c(4, 6)) %>% unlist
-```
-
----
-
-Second, we calculate the prevalence of any QRP **without `Not Applicable`'s**
-```{r}
-any_obs_na <- function(x) !any(x != 1)
-mice::complete(imp, 1) %>% #QRP has no missings -so use 1st imputed set
-  select(all_of(QRP_set)) %>% 
-  apply(., MARGIN = 1, any_obs_na) %>% 
-  table() %>% prop.test %>% 
-  extract(c(4, 6)) %>% unlist
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  summarise(`prevalence of any QRP` = mean(QRP_1))
 ```
 
 ---
@@ -107,30 +91,10 @@ mice::complete(imp, 1) %>% #QRP has no missings -so use 1st imputed set
 ### By disciplinary field
 First, we calculate the prevalence of any QRP **with `Not Applicable`'s**
 ```{r}
-any_obs <- function(x) any(x > 1)
-mice::complete(imp, 1) %>% #QRP has no missings -so use 1st imputed set
-  select(D2, all_of(QRP_set)) %>%
-  mutate(qrp_obs = apply(select(., -D2), 1, any_obs)) %>% 
-  group_by(D2) %>% 
-  summarise(total_count = n(), 
-            no_QRP = table(qrp_obs)[1],
-            any_QRP = table(qrp_obs)[2], 
-            prevalence = mean(qrp_obs))
-```
-
----
-
-Second, we calculate the prevalence of any QRP **without `Not Applicable`'s**
-```{r}
-any_obs_na <- function(x) any(x != 1)
-mice::complete(imp, 1) %>% #QRP has no missings -so use 1st imputed set
-  select(D2, all_of(QRP_set)) %>%
-  mutate(qrp_obs = apply(select(., -D2), 1, any_obs_na)) %>% 
-  group_by(D2) %>% 
-  summarise(total_count = n(), 
-            no_QRP = table(qrp_obs)[1],
-            any_QRP = table(qrp_obs)[2], 
-            prevalence = mean(qrp_obs))
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  select(QRP_1, Field) %>% 
+  group_by(Field) %>% 
+  summarise_all(list(prevalence = mean))
 ```
 
 ---

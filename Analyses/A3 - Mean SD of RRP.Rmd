@@ -82,18 +82,18 @@ RRP_set <- names(raw_data[86:107])[c(1, 2, 4, 6, 9, 12, 15, 16, 17, 19, 21 )]
 ### Overall
 First, we calculate the descriptive statistics
 ```{r}
-mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
-  select(all_of(RRP_set)) %>% 
-  na_if(0) %>% 
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  select(starts_with("R")) %>% 
+  select(!contains("_")) %>% 
   describe() %>% .[, 2:5] %>% 
   print.data.frame()
 ```
 
 Second, we create a pointrangeplot
 ```{r}
-mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
-  select(all_of(RRP_set)) %>% 
-  na_if(0) %>% 
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  select(starts_with("Q")) %>% 
+  select(!contains("_")) %>% 
   describe(fast = TRUE) %>% 
   rownames_to_column(var = "Practices") %>% 
   mutate(min = mean - 1.96*sd, # subtract [1.96] SD
@@ -108,27 +108,27 @@ mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
 ### By disciplinary field
 First, we calculate the descriptive statistics
 ```{r}
-mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
-  select(D2, all_of(RRP_set)) %>% 
-  na_if(0) %>% 
-  melt(id.vars = "D2", variable.name = "Practices", value.name = "Response") %>% 
-  group_by(D2, Practices) %>% 
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  select(starts_with("Q"), Rank) %>% 
+  select(!contains("_"), Rank) %>%  
+  melt(id.vars = "Rank", variable.name = "Practices", value.name = "Response") %>% 
+  group_by(Rank, Practices) %>% 
   summarise_all(list(mean = mean, sd = sd), na.rm = TRUE) %>% 
   print.data.frame()
 ```
 
 Second, we create a pointrangeplot
 ```{r}
-mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
-  select(D2, all_of(RRP_set)) %>% 
-  na_if(0) %>% 
-  melt(id.vars = "D2", variable.name = "Practices", value.name = "Response") %>% 
-  group_by(D2, Practices) %>% 
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  select(starts_with("Q"), Rank) %>% 
+  select(!contains("_"), Rank) %>%  
+  melt(id.vars = "Rank", variable.name = "Practices", value.name = "Response") %>% 
+  group_by(Rank, Practices) %>% 
   summarise_all(list(mean = mean, sd = sd), na.rm = TRUE) %>% 
   ggplot(aes(x = Practices, y = mean, 
              ymin = mean - 1.96*sd, 
              ymax = mean + 1.96*sd)) + 
-  geom_pointrange(aes(group = D2, colour = D2), 
+  geom_pointrange(aes(group = Rank, colour = Rank), 
                   position = position_dodge(width = 1)) + 
   theme_minimal()
 ```
@@ -138,30 +138,30 @@ mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
 ### By rank
 First, we calculate the descriptive statistics
 ```{r}
-mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
-  select(D3, all_of(RRP_set)) %>% 
-  na_if(0) %>% 
-  melt(id.vars = "D3", variable.name = "Practices", value.name = "Response") %>% 
-  group_by(D3, Practices) %>% 
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  select(starts_with("Q"), Field) %>% 
+  select(!contains("_"), Field) %>%  
+  melt(id.vars = "Field", variable.name = "Practices", value.name = "Response") %>% 
+  group_by(Field, Practices) %>% 
   summarise_all(list(mean = mean, sd = sd), na.rm = TRUE) %>%    
   print.data.frame()
 ```
 
 Second, we create a pointrangeplot
 ```{r}
-mice::complete(imp, 1) %>% #RRP has no missings -so use 1st imputed set
-  select(D3, all_of(RRP_set)) %>% 
-  mutate(D3 = recode(D3, "PhD student or junior researcher" = "PhD|Junior", "Postdoctoral researcher, Assistant Professor, Physician Researcher or Lecturer Researcher" = "PostDoc|AssistProf|Researcher", "Associate Professor or Full Professor" = "AssocProf|FullProf")) %>% 
-  na_if(0) %>% 
-  melt(id.vars = "D3", variable.name = "Practices", value.name = "Response") %>% 
-  group_by(D3, Practices) %>% 
+d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+  select(starts_with("Q"), Field) %>% 
+  select(!contains("_"), Field) %>%  
+  melt(id.vars = "Field", variable.name = "Practices", value.name = "Response") %>% 
+  group_by(Field, Practices) %>% 
   summarise_all(list(mean = mean, sd = sd), na.rm = TRUE) %>% 
   ggplot(aes(x = Practices, y = mean, 
              ymin = mean - 1.96*sd, 
              ymax = mean + 1.96*sd)) + 
-  geom_pointrange(aes(group = D3, colour = D3), 
+  geom_pointrange(aes(group = Field, colour = Field), 
                   position = position_dodge(width = 1)) + 
-  theme_minimal()
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 ---
