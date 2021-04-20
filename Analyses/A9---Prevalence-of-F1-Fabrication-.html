@@ -1577,7 +1577,8 @@ library(RRreg)    # Randomized Response</code></pre>
 <h1>Load the data</h1>
 <pre class="r"><code>load(file = &quot;../Workspaces/3. Data imputation.Rdata&quot;)
 load(file = &quot;../Workspaces/2. Data inspection.Rdata&quot;)
-load(file = &quot;../Workspaces/5. Preparation Imputed Datasets.Rdata&quot;)</code></pre>
+load(file = &quot;../Workspaces/5. Preparation Imputed Datasets.Rdata&quot;)
+source(file = &quot;../Functions/RR_functions.R&quot;)</code></pre>
 <hr />
 <div id="prevalence" class="section level2">
 <h2>Prevalence</h2>
@@ -1607,75 +1608,167 @@ RResp(raw_data$RR1, prob = 1/6)</code></pre>
 <pre><code>## 
 ##    1    2 
 ## 5486 1327</code></pre>
+<pre class="r"><code>#check
+d50[[1]] %$% 
+  table(RRfabr) %&gt;% 
+  melt(value.name = &quot;Freq&quot;) %&gt;% 
+  RR1()</code></pre>
+<pre><code>##   RRfabr Freq       phat      min95      max95
+## 1      0 5486 0.95783796 0.94373198 0.97194393
+## 2      1 1327 0.04216204 0.02805607 0.05626802</code></pre>
+<pre class="r"><code>#double check
+d50[[38]] %$% 
+  table(RRfabr) %&gt;% 
+  melt(value.name = &quot;Freq&quot;) %&gt;% 
+  RR1()</code></pre>
+<pre><code>##   RRfabr Freq       phat      min95      max95
+## 1      0 5486 0.95783796 0.94373198 0.97194393
+## 2      1 1327 0.04216204 0.02805607 0.05626802</code></pre>
 <hr />
 </div>
 <div id="by-disciplinary-field" class="section level3">
 <h3>By disciplinary field</h3>
 <p>We calculate the prevalence of any Fabrication as</p>
-<pre class="r"><code>mice::complete(imp, 1) %&gt;% #F1 has no missings - so use first imputed set
-  group_by(D2) %&gt;% 
-  summarise(true_proportion = RResp(RR1, prob = 1/6)) </code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  group_by(Field) %&gt;% 
+  summarise(true_proportion = RResp(RRfabr, prob = 1/6)) </code></pre>
 <pre><code>## # A tibble: 4 x 2
-##   D2                               true_proportion
-##   &lt;fct&gt;                                      &lt;dbl&gt;
-## 1 Social and Behavioral Sciences           0.0485 
-## 2 Arts and Humanities                      0.00708
-## 3 Engineering and Natural Sciences         0.0254 
-## 4 Biomedical and Life Sciences             0.0547</code></pre>
+##   Field      true_proportion
+##   &lt;fct&gt;                &lt;dbl&gt;
+## 1 Soc &amp; Beh          0.0485 
+## 2 Arts &amp; Hum         0.00708
+## 3 Eng &amp; Nat          0.0254 
+## 4 Bio &amp; Life         0.0547</code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% 
+  group_by(Field) %&gt;% 
+  group_map(~.x %$% 
+              RRuni(RRfabr, model = &quot;Warner&quot;, p = 5/6))</code></pre>
+<pre><code>## [[1]]
+## RR model: 
+## Warner Model with p = 0.833333333333333
+## 
+## Estimate of pi:
+## 0.048473 (0.013513) 
+## 
+## [[2]]
+## RR model: 
+## Warner Model with p = 0.833333333333333
+## 
+## Estimate of pi:
+## 0.007075 (0.022432) 
+## 
+## [[3]]
+## RR model: 
+## Warner Model with p = 0.833333333333333
+## 
+## Estimate of pi:
+## 0.025427 (0.015178) 
+## 
+## [[4]]
+## RR model: 
+## Warner Model with p = 0.833333333333333
+## 
+## Estimate of pi:
+## 0.054696 (0.011517)</code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  filter(Field == &quot;Soc &amp; Beh&quot;) %$% 
+  RResp(RRfabr, prob = 1/6)</code></pre>
+<pre><code>##          0 
+## 0.04847328</code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  filter(Field == &quot;Arts &amp; Hum&quot;) %$% 
+  RResp(RRfabr, prob = 1/6)</code></pre>
+<pre><code>##           0 
+## 0.007075472</code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  filter(Field == &quot;Eng &amp; Nat&quot;) %$% 
+  RResp(RRfabr, prob = 1/6)</code></pre>
+<pre><code>##          0 
+## 0.02542662</code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  filter(Field == &quot;Bio &amp; Life&quot;) %$% 
+  RResp(RRfabr, prob = 1/6)</code></pre>
+<pre><code>##          0 
+## 0.05469603</code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  group_by(Field) %&gt;% 
+  group_map(~.x %$% 
+              table(RRfabr) %&gt;% 
+              melt(value.name = &quot;Freq&quot;)) %&gt;% 
+              map(RR1)</code></pre>
+<pre><code>## [[1]]
+##   RRfabr Freq       phat      min95      max95
+## 1      0 1574 0.95152672 0.92504816 0.97800527
+## 2      1  391 0.04847328 0.02199473 0.07495184
+## 
+## [[2]]
+##   RRfabr Freq        phat       min95      max95
+## 1      0  527 0.992924528  0.94899261 1.03685645
+## 2      1  109 0.007075472 -0.03685645 0.05100739
+## 
+## [[3]]
+##   RRfabr Freq       phat        min95      max95
+## 1      0 1196 0.97457338  0.944833950 1.00431281
+## 2      1  269 0.02542662 -0.004312808 0.05516605
+## 
+## [[4]]
+##   RRfabr Freq       phat      min95      max95
+## 1      0 2189 0.94530397 0.92273564 0.96787229
+## 2      1  558 0.05469603 0.03212771 0.07726436</code></pre>
 <hr />
 </div>
 <div id="by-rank" class="section level3">
 <h3>By rank</h3>
 <p>We calculate the prevalence of any Fabrication as</p>
-<pre class="r"><code>mice::complete(imp, 1) %&gt;% #F1 has no missings - so use first imputed set
-  group_by(D3) %&gt;% 
-  summarise(true_proportion = RResp(RR1, prob = 1/6)) </code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  group_by(Rank) %&gt;% 
+  summarise(true_proportion = RResp(RRfabr, prob = 1/6)) </code></pre>
 <pre><code>## # A tibble: 3 x 2
-##   D3                                                             true_proportion
-##   &lt;fct&gt;                                                                    &lt;dbl&gt;
-## 1 PhD student or junior researcher                                        0.0399
-## 2 Postdoctoral researcher, Assistant Professor, Physician Resea…          0.0486
-## 3 Associate Professor or Full Professor                                   0.0359</code></pre>
+##   Rank    true_proportion
+##   &lt;fct&gt;             &lt;dbl&gt;
+## 1 PhD              0.0399
+## 2 Postdoc          0.0486
+## 3 Prof             0.0359</code></pre>
 <hr />
 </div>
 <div id="by-gender-identification" class="section level3">
 <h3>By gender identification</h3>
 <p>We calculate the prevalence of any Fabrication as</p>
-<pre class="r"><code>mice::complete(imp, 1) %&gt;% #F1 has no missings - so use first imputed set
-  group_by(D4) %&gt;% 
-  summarise(true_proportion = RResp(RR1, prob = 1/6)) </code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  group_by(Gender) %&gt;% 
+  summarise(true_proportion = RResp(RRfabr, prob = 1/6)) </code></pre>
 <pre><code>## # A tibble: 3 x 2
-##   D4                              true_proportion
-##   &lt;fct&gt;                                     &lt;dbl&gt;
-## 1 Female                                   0.0492
-## 2 Male                                     0.0367
-## 3 Other / Do not wish to disclose          0.0345</code></pre>
+##   Gender      true_proportion
+##   &lt;fct&gt;                 &lt;dbl&gt;
+## 1 Undisclosed          0.0345
+## 2 Female               0.0492
+## 3 Male                 0.0367</code></pre>
 <hr />
 </div>
 <div id="by-empirical-research-engagement" class="section level3">
 <h3>By empirical research engagement</h3>
 <p>We calculate the prevalence of any Fabrication as</p>
-<pre class="r"><code>mice::complete(imp, 1) %&gt;% #F1 has no missings - so use first imputed set
-  group_by(D5) %&gt;% 
-  summarise(true_proportion = RResp(RR1, prob = 1/6)) </code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  group_by(Research) %&gt;% 
+  summarise(true_proportion = RResp(RRfabr, prob = 1/6)) </code></pre>
 <pre><code>## # A tibble: 2 x 2
-##   D5    true_proportion
-##   &lt;fct&gt;           &lt;dbl&gt;
-## 1 Yes           0.0464 
-## 2 No            0.00685</code></pre>
+##   Research true_proportion
+##   &lt;fct&gt;              &lt;dbl&gt;
+## 1 Yes              0.0464 
+## 2 No               0.00685</code></pre>
 <hr />
 </div>
 <div id="by-institutional-support" class="section level3">
 <h3>By institutional support</h3>
 <p>We calculate the prevalence of any Fabrication as</p>
-<pre class="r"><code>mice::complete(imp, 1) %&gt;% #F1 has no missings - so use first imputed set
-  group_by(Group) %&gt;% 
-  summarise(true_proportion = RResp(RR1, prob = 1/6)) </code></pre>
+<pre class="r"><code>d50[[1]] %&gt;% #F1 has no missings - so use first imputed set
+  group_by(Support) %&gt;% 
+  summarise(true_proportion = RResp(RRfabr, prob = 1/6)) </code></pre>
 <pre><code>## # A tibble: 2 x 2
-##   Group             true_proportion
-##   &lt;fct&gt;                       &lt;dbl&gt;
-## 1 Joining group              0.0385
-## 2 Non-joining group          0.0455</code></pre>
+##   Support true_proportion
+##   &lt;fct&gt;             &lt;dbl&gt;
+## 1 Yes              0.0385
+## 2 No               0.0455</code></pre>
 <hr />
 </div>
 </div>
@@ -1700,22 +1793,22 @@ RResp(raw_data$RR1, prob = 1/6)</code></pre>
 ## other attached packages:
 ##  [1] RRreg_0.7.1    gtools_3.8.2   tibble_3.1.0   psych_2.0.12   labelled_2.7.0
 ##  [6] reshape2_1.4.4 ggplot2_3.3.3  DT_0.17        haven_2.3.1    purrr_0.3.4   
-## [11] magrittr_2.0.1 mice_3.13.0    dplyr_1.0.5   
+## [11] magrittr_2.0.1 mice_3.13.5    dplyr_1.0.5   
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] Rcpp_1.0.6        lattice_0.20-41   tidyr_1.1.3       assertthat_0.2.1 
-##  [5] digest_0.6.27     foreach_1.5.1     utf8_1.1.4        R6_2.5.0         
+##  [5] digest_0.6.27     foreach_1.5.1     utf8_1.2.1        R6_2.5.0         
 ##  [9] plyr_1.8.6        backports_1.2.1   evaluate_0.14     pillar_1.5.1     
 ## [13] rlang_0.4.10      rstudioapi_0.13   minqa_1.2.4       nloptr_1.2.2.2   
 ## [17] Matrix_1.3-2      rmarkdown_2.6     splines_4.0.4     lme4_1.1-26      
 ## [21] statmod_1.4.35    stringr_1.4.0     htmlwidgets_1.5.3 munsell_0.5.0    
-## [25] broom_0.7.5       compiler_4.0.4    xfun_0.21         pkgconfig_2.0.3  
+## [25] broom_0.7.6       compiler_4.0.4    xfun_0.21         pkgconfig_2.0.3  
 ## [29] mnormt_2.0.2      tmvnsim_1.0-2     htmltools_0.5.1.1 tidyselect_1.1.0 
 ## [33] codetools_0.2-18  fansi_0.4.2       crayon_1.4.1      withr_2.4.1      
 ## [37] MASS_7.3-53       grid_4.0.4        nlme_3.1-152      gtable_0.3.0     
-## [41] lifecycle_1.0.0   DBI_1.1.1         scales_1.1.1      cli_2.3.1        
+## [41] lifecycle_1.0.0   DBI_1.1.1         scales_1.1.1      cli_2.4.0        
 ## [45] stringi_1.5.3     debugme_1.1.0     doParallel_1.0.16 ellipsis_0.3.1   
-## [49] generics_0.1.0    vctrs_0.3.6       boot_1.3-26       iterators_1.0.13 
+## [49] generics_0.1.0    vctrs_0.3.7       boot_1.3-26       iterators_1.0.13 
 ## [53] tools_4.0.4       forcats_0.5.1     glue_1.4.2        hms_1.0.0        
 ## [57] parallel_4.0.4    yaml_2.2.1        colorspace_2.0-0  knitr_1.31</code></pre>
 <hr />
@@ -1724,7 +1817,7 @@ RResp(raw_data$RR1, prob = 1/6)</code></pre>
 <h1>Document info</h1>
 <p>Signed: <a href="https://www.gerkovink.com">Gerko Vink</a>,</p>
 <pre class="r"><code>timestamp()</code></pre>
-<pre><code>## ##------ Tue Apr  6 20:41:33 2021 ------##</code></pre>
+<pre><code>## ##------ Tue Apr 20 15:18:21 2021 ------##</code></pre>
 <hr />
 <p>END of DOCUMENT</p>
 </div>
