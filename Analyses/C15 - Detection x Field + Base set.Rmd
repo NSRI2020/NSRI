@@ -85,7 +85,9 @@ fit %>%
 # Inferences
 fit %>% 
   pool %>% 
-  summary(conf.int = TRUE)
+  summary(conf.int = TRUE) %>% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = "bonferroni"), 4)) %>% 
+  relocate(p.adjusted, .before = `2.5 %`)
 
 # model comparison
 D1(fit, base.fit)
@@ -110,7 +112,9 @@ fit %>%
 # Inferences
 fit %>% 
   pool %>% 
-  summary(conf.int = TRUE)
+  summary(conf.int = TRUE) %>% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = "bonferroni"), 4)) %>% 
+  relocate(p.adjusted, .before = `2.5 %`)
 
 # model comparison
 D1(fit, base.fit)
@@ -138,7 +142,9 @@ fit %>%
 # Inferences
 fit %>% 
   pool %>% 
-  summary(conf.int = TRUE)
+  summary(conf.int = TRUE) %>% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = "bonferroni"), 4)) %>% 
+  relocate(p.adjusted, .before = `2.5 %`)
 
 # model comparison
 D1(fit, base.fit)

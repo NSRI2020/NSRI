@@ -1617,7 +1617,9 @@ fit %&gt;%
 <pre class="r"><code># Inferences
 fit %&gt;% 
   pool %&gt;% 
-  summary(conf.int = TRUE)</code></pre>
+  summary(conf.int = TRUE) %&gt;% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = &quot;bonferroni&quot;), 4)) %&gt;% 
+  relocate(p.adjusted, .before = `2.5 %`)</code></pre>
 <pre><code>##               term    estimate  std.error  statistic       df      p.value
 ## 1      (Intercept)  4.45573827 0.09290181  47.961804 6799.311 0.000000e+00
 ## 2      Competitive -0.02062891 0.01210238  -1.704533 3221.332 8.837798e-02
@@ -1630,18 +1632,18 @@ fit %&gt;%
 ## 9       GenderMale -0.08368627 0.08920827  -0.938100 6797.683 3.482264e-01
 ## 10      ResearchNo -0.60504998 0.03960394 -15.277520 6799.311 0.000000e+00
 ## 11       SupportNo  0.05179296 0.02407642   2.151190 6798.809 3.149631e-02
-##           2.5 %       97.5 %
-## 1   4.273621657  4.637854884
-## 2  -0.044358059  0.003100239
-## 3  -0.441040547 -0.265957366
-## 4   0.125215950  0.260331111
-## 5   0.167187562  0.277051420
-## 6   0.405031504  0.516078099
-## 7   0.456237139  0.577034248
-## 8  -0.308732167  0.042827925
-## 9  -0.258562402  0.091189858
-## 10 -0.682686097 -0.527413863
-## 11  0.004595642  0.098990274</code></pre>
+##    p.adjusted        2.5 %       97.5 %
+## 1      0.0000  4.273621657  4.637854884
+## 2      0.9722 -0.044358059  0.003100239
+## 3      0.0000 -0.441040547 -0.265957366
+## 4      0.0000  0.125215950  0.260331111
+## 5      0.0000  0.167187562  0.277051420
+## 6      0.0000  0.405031504  0.516078099
+## 7      0.0000  0.456237139  0.577034248
+## 8      1.0000 -0.308732167  0.042827925
+## 9      1.0000 -0.258562402  0.091189858
+## 10     0.0000 -0.682686097 -0.527413863
+## 11     0.3465  0.004595642  0.098990274</code></pre>
 <pre class="r"><code># model comparison
 D1(fit, base.fit)</code></pre>
 <pre><code>##    test statistic df1      df2 dfcom    p.value        riv
@@ -1689,7 +1691,9 @@ fit %&gt;%
 <pre class="r"><code># Inferences
 fit %&gt;% 
   pool %&gt;% 
-  summary(conf.int = TRUE)</code></pre>
+  summary(conf.int = TRUE) %&gt;% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = &quot;bonferroni&quot;), 4)) %&gt;% 
+  relocate(p.adjusted, .before = `2.5 %`)</code></pre>
 <pre><code>##               term     estimate   std.error  statistic       df      p.value
 ## 1      (Intercept)  1.874605177 0.060401181 31.0359029 6784.417 0.000000e+00
 ## 2      Competitive  0.080730256 0.007931063 10.1789962 2672.128 0.000000e+00
@@ -1702,18 +1706,18 @@ fit %&gt;%
 ## 9       GenderMale  0.079646184 0.058003596  1.3731249 6780.296 1.697589e-01
 ## 10      ResearchNo -0.168834202 0.025748718 -6.5569944 6784.691 5.894019e-11
 ## 11       SupportNo  0.021539815 0.015651603  1.3762050 6785.895 1.688036e-01
-##           2.5 %      97.5 %
-## 1   1.756199914  1.99301044
-## 2   0.065178615  0.09628190
-## 3  -0.221470583 -0.10764057
-## 4  -0.036456761  0.05140635
-## 5   0.047191610  0.11864842
-## 6  -0.039145203  0.03308661
-## 7  -0.127479073 -0.04892232
-## 8  -0.086924985  0.14165410
-## 9  -0.034059074  0.19335144
-## 10 -0.219309767 -0.11835864
-## 11 -0.009142236  0.05222187</code></pre>
+##    p.adjusted        2.5 %      97.5 %
+## 1       0e+00  1.756199914  1.99301044
+## 2       0e+00  0.065178615  0.09628190
+## 3       0e+00 -0.221470583 -0.10764057
+## 4       1e+00 -0.036456761  0.05140635
+## 5       1e-04  0.047191610  0.11864842
+## 6       1e+00 -0.039145203  0.03308661
+## 7       1e-04 -0.127479073 -0.04892232
+## 8       1e+00 -0.086924985  0.14165410
+## 9       1e+00 -0.034059074  0.19335144
+## 10      0e+00 -0.219309767 -0.11835864
+## 11      1e+00 -0.009142236  0.05222187</code></pre>
 <pre class="r"><code># model comparison
 D1(fit, base.fit)</code></pre>
 <pre><code>##    test statistic df1      df2 dfcom      p.value       riv
@@ -1763,7 +1767,9 @@ fit %&gt;%
 <pre class="r"><code># Inferences
 fit %&gt;% 
   pool %&gt;% 
-  summary(conf.int = TRUE)</code></pre>
+  summary(conf.int = TRUE) %&gt;% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = &quot;bonferroni&quot;), 4)) %&gt;% 
+  relocate(p.adjusted, .before = `2.5 %`)</code></pre>
 <pre><code>##               term     estimate  std.error    statistic       df      p.value
 ## 1      (Intercept) -0.001193484 0.19958839 -0.005979727 6792.075 9.952291e-01
 ## 2      Competitive  0.193467327 0.02647296  7.308110889 2603.378 3.586020e-13
@@ -1776,18 +1782,18 @@ fit %&gt;%
 ## 9       GenderMale  0.217531371 0.19176219  1.134380924 6788.091 2.566749e-01
 ## 10      ResearchNo -0.332284959 0.08552707 -3.885143532 6792.453 1.032415e-04
 ## 11       SupportNo  0.072335428 0.05167444  1.399829840 6792.809 1.616099e-01
-##          2.5 %      97.5 %
-## 1  -0.39244926  0.39006229
-## 2   0.14155714  0.24537751
-## 3  -0.47552408 -0.09810234
-## 4  -0.19724878  0.09194749
-## 5   0.05474101  0.29000290
-## 6  -0.19351341  0.04486043
-## 7  -0.38664004 -0.12711188
-## 8  -0.35172899  0.40378793
-## 9  -0.15838264  0.59344539
-## 10 -0.49994482 -0.16462510
-## 11 -0.02896267  0.17363352</code></pre>
+##    p.adjusted       2.5 %      97.5 %
+## 1      1.0000 -0.39244926  0.39006229
+## 2      0.0000  0.14155714  0.24537751
+## 3      0.0319 -0.47552408 -0.09810234
+## 4      1.0000 -0.19724878  0.09194749
+## 5      0.0449  0.05474101  0.29000290
+## 6      1.0000 -0.19351341  0.04486043
+## 7      0.0012 -0.38664004 -0.12711188
+## 8      1.0000 -0.35172899  0.40378793
+## 9      1.0000 -0.15838264  0.59344539
+## 10     0.0011 -0.49994482 -0.16462510
+## 11     1.0000 -0.02896267  0.17363352</code></pre>
 <pre class="r"><code># model comparison
 D1(fit, base.fit)</code></pre>
 <pre><code>##    test statistic df1      df2 dfcom      p.value       riv
@@ -1852,7 +1858,8 @@ D1(fit, base.fit)</code></pre>
   mutate(t = ubar + b + b/50, # m = 50 imputations
          se = sqrt(t),
          z = qbar/se,
-         pval = 2 * pnorm(-abs(z)))</code></pre>
+         pval = 2 * pnorm(-abs(z))) %&gt;% 
+  mutate(p.adjusted = round(p.adjust(pval, method = &quot;bonferroni&quot;), 4))</code></pre>
 <pre><code>## Warning in log(Q[j + 1, ] %*% t(probs[sy == j, ])): NaNs produced
 
 ## Warning in log(Q[j + 1, ] %*% t(probs[sy == j, ])): NaNs produced
@@ -1902,21 +1909,21 @@ D1(fit, base.fit)</code></pre>
 ## Warning in log(Q[j + 1, ] %*% t(probs[sy == j, ])): NaNs produced
 
 ## Warning in log(Q[j + 1, ] %*% t(probs[sy == j, ])): NaNs produced</code></pre>
-<pre><code>## # A tibble: 12 x 8
-##    pars               qbar   ubar         b      t    se      z       pval
-##    &lt;chr&gt;             &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;      &lt;dbl&gt;
-##  1 alpha1           2.60   0.290  0.00129   0.292  0.540  4.82  0.00000143
-##  2 alpha2           6.24   4.03   0.0450    4.08   2.02   3.09  0.00199   
-##  3 Competitive     -0.0894 0.0239 0.00349   0.0274 0.166 -0.540 0.589     
-##  4 FieldArts &amp; Hum -0.190  0.196  0.000134  0.196  0.443 -0.428 0.669     
-##  5 FieldBio &amp; Life -0.334  0.0823 0.000524  0.0829 0.288 -1.16  0.246     
-##  6 FieldEng &amp; Nat  -0.175  0.132  0.0000872 0.133  0.364 -0.482 0.630     
-##  7 GenderFemale    -0.254  0.219  0.000311  0.220  0.469 -0.541 0.588     
-##  8 GenderMale       0.106  0.217  0.0000582 0.217  0.466  0.227 0.820     
-##  9 RankPostdoc      0.192  0.0874 0.000546  0.0879 0.297  0.649 0.516     
-## 10 RankProf        -0.0923 0.0996 0.00111   0.101  0.317 -0.291 0.771     
-## 11 ResearchNo       0.440  0.212  0.000344  0.212  0.460  0.956 0.339     
-## 12 SupportNo       -0.0360 0.0669 0.000187  0.0670 0.259 -0.139 0.890</code></pre>
+<pre><code>## # A tibble: 12 x 9
+##    pars            qbar   ubar        b      t    se      z      pval p.adjusted
+##    &lt;chr&gt;          &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;      &lt;dbl&gt;
+##  1 alpha1        2.60   0.290   1.29e-3 0.292  0.540  4.82    1.43e-6     0     
+##  2 alpha2        6.24   4.03    4.50e-2 4.08   2.02   3.09    1.99e-3     0.0238
+##  3 Competitive  -0.0894 0.0239  3.49e-3 0.0274 0.166 -0.540   5.89e-1     1     
+##  4 FieldArts &amp;… -0.190  0.196   1.34e-4 0.196  0.443 -0.428   6.69e-1     1     
+##  5 FieldBio &amp; … -0.334  0.0823  5.24e-4 0.0829 0.288 -1.16    2.46e-1     1     
+##  6 FieldEng &amp; … -0.175  0.132   8.72e-5 0.133  0.364 -0.482   6.30e-1     1     
+##  7 GenderFemale -0.254  0.219   3.11e-4 0.220  0.469 -0.541   5.88e-1     1     
+##  8 GenderMale    0.106  0.217   5.82e-5 0.217  0.466  0.227   8.20e-1     1     
+##  9 RankPostdoc   0.192  0.0874  5.46e-4 0.0879 0.297  0.649   5.16e-1     1     
+## 10 RankProf     -0.0923 0.0996  1.11e-3 0.101  0.317 -0.291   7.71e-1     1     
+## 11 ResearchNo    0.440  0.212   3.44e-4 0.212  0.460  0.956   3.39e-1     1     
+## 12 SupportNo    -0.0360 0.0669  1.87e-4 0.0670 0.259 -0.139   8.90e-1     1</code></pre>
 <hr />
 </div>
 </div>
@@ -1964,7 +1971,7 @@ D1(fit, base.fit)</code></pre>
 <h1>Document info</h1>
 <p>Signed: <a href="https://www.gerkovink.com">Gerko Vink</a>,</p>
 <pre class="r"><code>timestamp()</code></pre>
-<pre><code>## ##------ Tue Apr 13 21:30:59 2021 ------##</code></pre>
+<pre><code>## ##------ Mon Apr 19 21:28:14 2021 ------##</code></pre>
 <hr />
 <p>END of DOCUMENT</p>
 </div>

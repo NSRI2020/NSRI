@@ -79,6 +79,12 @@ fit %>%
 fit %>% 
   pool %>% 
   summary(conf.int = TRUE)
+
+fit %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = "bonferroni"), 4)) %>% 
+  relocate(p.adjusted, .before = `2.5 %`)
 ```
 
 --- 
@@ -93,7 +99,9 @@ fit %>%
 
 fit %>% 
   pool %>% 
-  summary(conf.int = TRUE)
+  summary(conf.int = TRUE)  %>% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = "bonferroni"), 4)) %>% 
+  relocate(p.adjusted, .before = `2.5 %`)
 ```
 
 ---
@@ -108,7 +116,9 @@ fit %>%
 
 fit %>% 
   pool %>% 
-  summary(conf.int = TRUE)
+  summary(conf.int = TRUE) %>% 
+  mutate(p.adjusted = round(p.adjust(p.value, method = "bonferroni"), 4)) %>% 
+  relocate(p.adjusted, .before = `2.5 %`)
 ```
 
 ---
@@ -174,7 +184,8 @@ d50 %>%
   mutate(t = ubar + b + b/50, # m = 50 imputations
          se = sqrt(t),
          z = qbar/se,
-         pval = 2 * pnorm(-abs(z)))
+         pval = 2 * pnorm(-abs(z)))  %>% 
+  mutate(p.adjusted = round(p.adjust(pval, method = "bonferroni"), 4)) 
 ```
 
 ---
