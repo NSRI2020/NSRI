@@ -4,14 +4,15 @@ author: "Gerko Vink"
 date: Characteristics of respondents by background variables and by the 10 explanatory
   variable scales
 output:
-  word_document:
-    toc: yes
-    toc_depth: '5'
   html_document:
     toc: yes
     toc_depth: 5
     toc_float: yes
     number_sections: no
+  word_document:
+    toc: yes
+    toc_depth: '5'
+always_allow_html: true
 ---
 
 <style type="text/css">
@@ -655,6 +656,9 @@ rownames(MeanCI) <- c(rbind(paste(evs, "MEAN", sep = "_"),
 options(DT.options = list(pageLength = 50))
 rbind(Row1, Row2, Row3, MeanCI) %>% 
   datatable(options = )
+
+rbind(Row1, Row2, Row3, MeanCI) %>% 
+  as.data.frame()
 ```
 
 

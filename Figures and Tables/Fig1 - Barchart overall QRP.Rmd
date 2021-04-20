@@ -1,5 +1,5 @@
 ---
-title: "Barchart - Overall QRP"
+title: "Fig2 - Barchart - Overall QRP"
 author: "Gerko Vink"
 date: ""
 output: 
