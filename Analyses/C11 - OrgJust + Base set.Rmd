@@ -68,6 +68,16 @@ The list of data sets `d50` is cf. the script `5.-Preparation-Imputed-Datasets.R
 
 ---
 
+# Relevel
+We relevel the columns `Gender` and `Field` to conform to reference categories set in the data analysis plan. 
+```{r}
+d50 %<>% 
+  map(~.x %>% mutate(Gender = relevel(Gender, ref = "Male"),
+                     Field = relevel(Field, ref = "Bio & Life")))
+```
+
+---
+
 # RRP Mean
 ```{r}
 # Multiply imputed repeated analysis - Base set
