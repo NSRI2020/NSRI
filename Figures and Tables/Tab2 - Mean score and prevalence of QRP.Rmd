@@ -3,14 +3,14 @@ title: "Table 2"
 author: "Gerko Vink"
 date: Mean score and prevalence^^  of Questionable Research Practices (QRP), Falsification, and Fabrication stratified by Disciplinary Field and Academic Rank
 output:
-  word_document:
-    toc: yes
-    toc_depth: '5'
   html_document:
     toc: yes
     toc_depth: 5
     toc_float: yes
     number_sections: no
+  word_document:
+    toc: yes
+    toc_depth: '5'
 always_allow_html: true
 ---
 
@@ -161,13 +161,51 @@ Means
 
 ---
 
-# Prevalence
+# Prevalence of QRP items
 ```{r echo = FALSE}
 p.test <- function(x){
   t <- suppressWarnings(prop.test(x))
   paste(round(t$estimate, 3),
         paste("(", round(t$conf.int[1], 3), ",", round(t$conf.int[2], 3), ")", sep = ""))
 }
+p.fun <- function(x){
+  table(x > 4) %>% .[c(2, 1)] %>% t() %>% p.test
+}
+
+Prevalence_QRP_Overall <- d50[[1]] %>% 
+  select(contains("Q")) %>% # select relevant columns
+  select(!contains("_")) %>%
+  summarise_all(list(prevalence = p.fun)) %>% t() %>% 
+  data.frame(Overall = .)
+
+Prevalence_QRP_Field <- d50[[1]] %>% 
+  select(contains("Q"), Field) %>% # select relevant columns
+  select(!contains("_"), Field) %>%
+  group_by(Field) %>% 
+  summarise_all(list(prevalence = p.fun)) %>% t() %>% .[, c(4, 1, 3, 2)] %>% 
+  .[-1, ] %>% as.data.frame() %>% 
+  `colnames<-`(names(Means)[2:5])
+
+Prevalence_QRP_Rank <- d50[[1]] %>% 
+  select(contains("Q"), Rank) %>% # select relevant columns
+  select(!contains("_"), Rank) %>%
+  group_by(Rank) %>% 
+  summarise_all(list(prevalence = p.fun)) %>% t() %>% .[-1, ] %>% 
+  as.data.frame() %>% 
+  `colnames<-`(names(Means)[6:8])
+
+prevalence <- cbind(Prevalence_QRP_Field, 
+                    Prevalence_QRP_Rank, 
+                    Prevalence_QRP_Overall) %>% 
+  .[c(1, 6, 8, 10, 9, 3, 7, 11, 2, 4, 5), ] #correct row order
+prevalence %>% datatable()
+prevalence
+```
+
+---
+
+# Prevalence of any QRP and Randomized Response
+```{r echo = FALSE}
 QRP1_overall <- d50[[1]] %$% #RRP has no missings -so use 1st imputed set
   table(1 - QRP_1) %>% prop.table() %>% p.test
 Fals_overall <- d50[[1]] %$% 

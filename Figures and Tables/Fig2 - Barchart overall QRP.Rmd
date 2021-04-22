@@ -52,6 +52,8 @@ library(purrr)    # Functional programming
 library(haven)    # Import data
 library(DT)       # Interactive tables
 library(ggplot2)  # Plotting device
+library(gridExtra)# Grids
+library(tidyr)    # Tidy modeling
 library(reshape2) # Data shaping
 library(labelled) # Advanced labelling
 ```
@@ -67,7 +69,7 @@ load(file = "../Workspaces/5. Preparation Imputed Datasets.Rdata")
 
 # Plot with Not Applicable
 ```{r}
-d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+a <- d50[[1]] %>% #RRP has no missings -so use 1st imputed set
   select(starts_with("Q")) %>% 
   select(1:11) %>% 
   sapply(table) %>% 
@@ -78,18 +80,25 @@ d50[[1]] %>% #RRP has no missings -so use 1st imputed set
   ggplot(aes(x = Practices, y = Percentage, fill = Response)) +
   geom_bar(stat = 'identity', position = "stack", colour="black") +
   geom_col(position = position_stack(reverse = TRUE)) + 
-  scale_fill_brewer(palette = "Spectral") +
+  scale_fill_brewer(palette = "RdBu", direction = -1) +
   scale_y_continuous(labels = scales::percent) + 
   theme_minimal()  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+a
+pdf(file = "Fig2_withNA.pdf", width = 10, height = 6)
+a
+dev.off()
 
+pdf(file = "Fig2_withNA_large.pdf", width = 6, height = 4)
+a
+dev.off()
 ```
 
 --
 
 # Plot without Not Applicable
 ```{r}
-d50[[1]] %>% #RRP has no missings -so use 1st imputed set
+p <- d50[[1]] %>% #RRP has no missings -so use 1st imputed set
   select(starts_with("Q")) %>% 
   select(!contains("_")) %>% 
   sapply(table) %>% 
@@ -100,10 +109,19 @@ d50[[1]] %>% #RRP has no missings -so use 1st imputed set
   ggplot(aes(x = Practices, y = Percentage, fill = Response)) +
   geom_bar(stat = 'identity', position = "stack", colour="black") +
   geom_col(position = position_stack(reverse = TRUE)) + 
-  scale_fill_brewer(palette = "Spectral") +
+  scale_fill_brewer(palette = "RdBu", direction = -1) +
   scale_y_continuous(labels = scales::percent) + 
   theme_minimal()  + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+p
+pdf(file = "Fig2.pdf", width = 10, height = 6)
+p
+dev.off()
+
+pdf(file = "Fig2_large.pdf", width = 6, height = 3.5)
+p
+dev.off()
 
 ```
 

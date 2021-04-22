@@ -1,0 +1,649 @@
+---
+title: "Table 3"
+author: "Gerko Vink"
+date: Linear, Logistic and Proportional Odds Regression Coefficients (95% CI) of QRPs, any QRP^^ and any FF  by Explanatory Variable Scales
+output:
+  html_document:
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    number_sections: no
+  word_document:
+    toc: yes
+    toc_depth: '5'
+always_allow_html: true
+---
+
+<style type="text/css">
+  
+body{ /* Normal  */
+  font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 12px;
+}
+h1.title {
+  font-size: 18px;
+  color: DarkBlue;
+}
+h1 { /* Header 1 */
+  font-size: 18px;
+}
+h2 { /* Header 2 */
+  font-size: 18px;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+}
+code.r{ /* Code block */
+  font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+  font-size: 14px;
+}
+</style>
+
+
+---
+
+# Packages used
+For this document we use the following packages
+```{r message=FALSE, warning=FALSE}
+library(dplyr)    # Data manipulation
+library(mice)     # Data imputation
+library(magrittr) # Pipes
+library(purrr)    # Functional programming
+library(haven)    # Import data
+library(DT)       # Interactive tables
+library(ggplot2)  # Plotting device
+library(reshape2) # Data shaping
+library(labelled) # Advanced labelling
+library(psych)    # Descriptive tables
+library(tibble)   # Tibbles
+library(RRreg)    # Randomized Response
+```
+
+---
+
+# Load the data
+```{r}
+load(file = "../Workspaces/5. Preparation Imputed Datasets.Rdata")
+options(DT.options = list(pageLength = 50)) # table options
+```
+
+---
+
+```{r echo=FALSE}
+d50 %<>% 
+  map(~.x %>% mutate(Gender = relevel(Gender, ref = "Male"),
+                     Field = relevel(Field, ref = "Bio & Life")))
+```
+
+---
+
+```{r echo=FALSE}
+knitr::opts_chunk$set(comment="", message=F, warning=F, echo=F, cache=T)
+RRpropodds <- function(df){
+  df <- na.omit(df)
+  y  <- df[, 1:2]
+  sy <- rowSums(y)
+  n  <- nrow(y)
+  M  <- ncol(y)
+  x <- model.matrix(~ ., df)[, -(1:3), drop = F]
+  P <- matrix(c(5, 1, 1, 5) / 6, 2, 2)
+  Q <- P %x% P
+  Q[2, ] <- colSums(Q[2:3, ])
+  Q <- Q[-3, -3]
+  logl <- function(theta){
+    alpha     <- matrix(theta[1:M], n, M, byrow = T)
+    b         <- theta[(M + 1):length(theta)]
+    if(ncol(df) > M){
+      xb        <- x %*% b
+      cum.probs <- exp(alpha + c(xb)) / (1 + exp(alpha + c(xb)))
+    } else {
+      cum.probs <- exp(alpha) / (1 + exp(alpha))
+    }
+    probs     <- cbind(cum.probs, 1) - cbind(0, cum.probs)
+    logl  <- 0
+    for(j in 0:M){
+      logl <- logl - sum(log(Q[j + 1, ] %*% t(probs[sy == j, ])))
+    }
+    return(logl + sum(b^2))
+  }
+  if (ncol(df) > M) {
+    par0 <- c(2, 5, rep(0, ncol(x)))
+  } else {
+    par0 <- c(2, 5)
+  }
+  fit  <- optim(par0, logl, hessian = T, method = "BFGS")
+  bhat  <- fit$par
+  bvar  <- diag(solve(fit$hessian))
+  data.frame(pars = c(paste0("alpha", 1:M), if(ncol(df) > M)colnames(x)), bhat, bvar)
+}
+```
+
+```{r echo = FALSE, cache = TRUE}
+wp.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ WorkPress + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+wp.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ WorkPress + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+set.seed(123)
+wp.po <- d50 %>% 
+  map(select, RRfabr, RRfals, WorkPress, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "WorkPress") %>% select(Oci)
+```
+```{r echo = FALSE, cache = TRUE}
+pp.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ PubPress + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+pp.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ PubPress + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+pp.po <- d50 %>% 
+  map(select, RRfabr, RRfals, PubPress, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "PubPress") %>% select(Oci)
+```
+
+```{r echo = FALSE, cache = TRUE}
+fp.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ FundPress + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+fp.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ FundPress + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+set.seed(123)
+fp.po <- d50 %>% 
+  map(select, RRfabr, RRfals, FundPress, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "FundPress") %>% select(Oci)
+```
+
+```{r echo = FALSE, cache = TRUE}
+me.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ Mentoring + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+me.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ Mentoring + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+set.seed(123)
+me.po <- d50 %>% 
+  map(select, RRfabr, RRfals, Mentoring, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "Mentoring") %>% select(Oci)
+```
+
+```{r echo = FALSE, cache = TRUE}
+co.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ Competitive + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+co.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ Competitive + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+co.po <- d50 %>% 
+  map(select, RRfabr, RRfals, Competitive, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "Competitive") %>% select(Oci)
+```
+
+```{r echo = FALSE, cache = TRUE}
+sn.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ SciNorms + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+sn.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ SciNorms + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+sn.po <- d50 %>% 
+  map(select, RRfabr, RRfals, SciNorms, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "SciNorms") %>% select(Oci)
+```
+
+```{r echo = FALSE, cache = TRUE}
+pn.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ PeerNorms + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+pn.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ PeerNorms + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+pn.po <- d50 %>% 
+  map(select, RRfabr, RRfals, PeerNorms, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "PeerNorms") %>% select(Oci)
+```
+
+```{r echo = FALSE, cache = TRUE}
+oj.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+oj.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ OrgJust + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+oj.po <- d50 %>% 
+  map(select, RRfabr, RRfals, OrgJust, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "OrgJust") %>% select(Oci)
+```
+
+
+```{r echo = FALSE, cache = TRUE}
+dc.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ DetectCol + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+dc.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ DetectCol + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+dc.po <- d50 %>% 
+  map(select, RRfabr, RRfals, DetectCol, Field, Rank, Research) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "DetectCol") %>% select(Oci)
+```
+
+```{r echo = FALSE, cache = TRUE}
+dr.lm <- d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ DetectRev + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(Bci = paste(round(estimate, 3),
+        paste("(", round(`2.5 %`, 3), ",", round(`97.5 %`, 3), ")", sep = ""))) %>% 
+  select(Bci)
+
+dr.glm <- d50 %>% 
+  map(glm, formula = QRP_1 ~ DetectRev + Field + Rank + Gender + Research + Support, 
+      family = binomial(link = "logit")) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% .[2, ] %>% 
+  mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+         lwr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate - 1.96 * std.error)),
+         upr = if_else(term == '(Intercept)', as.numeric(NA), 
+                       exp(estimate + 1.96 * std.error)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  select(Oci)
+
+dr.po <- d50 %>% 
+  map(select, RRfabr, RRfals, DetectRev, Field, Rank, Research,) %>% 
+  map(RRpropodds) %>% 
+  reduce(rbind) %>% 
+  group_by(pars) %>% 
+  summarise(qbar = mean(bhat), 
+            ubar = mean(bvar),
+            b = var(bhat)) %>% 
+  mutate(t = ubar + b + b/50, # m = 50 imputations
+         se = sqrt(t),
+         z = qbar/se,
+         pval = 2 * pnorm(-abs(z)),
+         OR = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), exp(qbar)), 
+         lwr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA),  
+                       exp(qbar - 1.96 * se)),
+         upr = if_else(pars %in% c('alpha1', 'alpha2'), as.numeric(NA), 
+                       exp(qbar + 1.96 * se)),
+         Oci = paste(round(OR, 3), 
+                     paste("(", round(lwr, 3), ",", round(upr, 3), ")", 
+                           sep = ""))) %>% 
+  filter(pars == "DetectRev") %>% select(Oci)
+```
+
+```{r}
+out <- cbind(c(wp.lm, pp.lm, fp.lm, me.lm, co.lm, 
+               sn.lm, pn.lm, oj.lm, dc.lm, dr.lm),
+             c(wp.glm, pp.glm, fp.glm, me.glm, co.glm, 
+               sn.glm, pn.glm, oj.glm, dc.glm, dr.glm),
+             c(wp.po, pp.po, fp.po, me.po, co.po, 
+               sn.po, pn.po, oj.po, dc.po, dr.po)) %>% 
+  data.frame(., row.names = c("Work Pressure",
+                             "Publication Pressure",
+                             "Funding Pressure",
+                             "Mentoring *",
+                             "Competitiveness",
+                             "Scientific Norm",
+                             "Peer Norms",
+                             "Organizational Justice **",
+                             "Likelihood of detection (Collaborators)",
+                             "Likelihood of detection (Reviewers)")) %>% 
+  `colnames<-`(c("Linear", "Logistic", "Ordinal"))
+out %>% datatable()
+out
+```
+
+---
+
+# Session Info
+```{r}
+sessionInfo()
+```
+
+---
+
+# Document info
+Signed: 
+[Gerko Vink](https://www.gerkovink.com), 
+
+```{r}
+timestamp()
+```
+
+---
+
+END of DOCUMENT
