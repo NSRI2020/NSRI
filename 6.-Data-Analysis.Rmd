@@ -43,6 +43,8 @@ pre { /* Code block - determines code spacing between lines */
 
 This document contains the analyses as described in "NSRI data analysis plan - VERSION 7 - 20120126.docx".
 
+
+Loading packages, sourcing the functions for the randomized response models, loading the data, setting the reference categories according data analaysis plan, and making help vectors for variable selection and colors in the bar plots. 
 ```{r include=F}
 knitr::opts_chunk$set(comment="", message=F, warning=F, echo=F, cache=T)
 library(tidyverse)
@@ -52,9 +54,27 @@ library(gridExtra)
 library(kableExtra)
 library(psych)
 
-load("Workspaces/5. Preparation Imputed Datasets.Rdata")
+source("RR_functions.R")
 
-source("Functions/RR_functions.R")
+load("5. Preparation Imputed Datasets.Rdata")
+
+d50 <- d50 %>%  
+  map(~ .x %>% 
+        mutate_at(vars(Field), 
+                  relevel, ref = "Bio & Life") %>% 
+        mutate_at(vars(Rank), 
+                  relevel, ref = "Postdoc") %>% 
+        mutate_at(vars(Gender), 
+                  relevel, ref = "Male") %>% 
+        mutate_at(vars(Support), 
+                  relevel, ref = "No") %>% 
+        mutate_at(vars(Research), 
+                  relevel, ref = "Yes")
+        )
+
+
+evs  <- c("SciNorms", "PeerNorms", "WorkPress", "PubPress", "FundPress",
+         "Competitive","DetectCol", "DetectRev", "Mentoring", "OrgJust")
 
 rrp <- c("RDisclFunds", "RCorrectPub", "RAuthorship", "ROpenData", "RKeepRecord", 
          "RPreReg", "RDataManage", "ROpenAccess", "RCiteSource", "ROpenCode", "RErrorCheck")
@@ -151,8 +171,7 @@ alpha <- bind_rows(
 
 ```{r}
 data.frame(mean_items, alpha,
-           row.names = c("SciNorms", "PeerNorms", "WorkPress", "PublPress", "FundPress",
-                         "Competitive","DetectCol", "DetectRev", "Mentoring", "OrgJust"))%>% 
+           row.names = evs) %>% 
   kbl(caption = "Mean item scores and Cronbach's Alpha, averaged over the 50 completed data sets.",
       digits = 2) %>% 
   kable_styling(font_size = 10, full_width = T)
@@ -175,92 +194,10 @@ The Explanatory Variable Scale (EVS) are computed as
 
 ## Missings per scale
 ```{r 3.1}
-scale_na <- c(
-d50 %>% map(~ .x %>% summarise(sum(is.na(SciNorms))))   %>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(PeerNorms))))  %>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(WorkPress))))  %>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(PubPress))))   %>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(FundPress))))  %>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(Competitive))))%>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(DetectCol))))  %>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(DetectRev))))  %>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(Mentoring))))  %>% unlist() %>% mean,
-d50 %>% map(~ .x %>% summarise(sum(is.na(OrgJust))))    %>% unlist() %>% mean) 
-data.frame(NAs = scale_na, 
-           row.names = c("SciNorms", "PeerNorms", "WorkPress", "PublPress", "FundPress",
-                         "Competitive","DetectCol", "DetectRev", "Mentoring", "OrgJust")) %>% 
-  kbl(caption = "Number of cases with a missing score on the scale, averaged over the 50 completed data sets.", digits = 1) %>% 
-  kable_styling(font_size = 10, full_width = T)
- 
-```
-
-## Histograms
-```{r fig.asp = 2}
-grid.arrange(
-  d50 %>% map(select, SciNorms) %>% 
-  as.data.frame %>% 
-  transmute(SciNorms = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(SciNorms)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, PeerNorms) %>% 
-  as.data.frame %>% 
-  transmute(PeerNorms = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(PeerNorms)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, WorkPress) %>% 
-  as.data.frame %>% 
-  transmute(WorkPress = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(WorkPress)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, PubPress) %>% 
-  as.data.frame %>% 
-  transmute(PubPress = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(PubPress)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, FundPress) %>% 
-  as.data.frame %>% 
-  transmute(FundPress = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(FundPress)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, Competitive) %>% 
-  as.data.frame %>% 
-  transmute(Competitive = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(Competitive)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, DetectCol) %>% 
-  as.data.frame %>% 
-  transmute(DetectCol = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(DetectCol)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, DetectRev) %>% 
-  as.data.frame %>% 
-  transmute(DetectRev = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(DetectRev)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, Mentoring) %>% 
-  as.data.frame %>% 
-  transmute(Mentoring = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(Mentoring)) +
-  geom_histogram() +
-  theme_minimal(),
-d50 %>% map(select, OrgJust) %>% 
-  as.data.frame %>% 
-  transmute(OrgJust = rowMeans(., na.rm = T)) %>% 
-  ggplot(aes(OrgJust)) +
-  geom_histogram() +
-  theme_minimal(),
-nrow = 5
-) 
-
-
+d50 %>% map(select, !!!syms(evs)) %>% 
+  map(~.x %>% summarise_all(is.na)) %>% 
+  map(~.x %>%  summarise_all(sum)) %>% 
+  Reduce("+", .) / 50  
 ```
 
 
@@ -268,7 +205,7 @@ nrow = 5
 
 ```{r fig.asp=.3}
 d50 %>% 
-  map(select, Field, SciNorms:OrgJust) %>% 
+  map(select, Field, !!!syms(evs)) %>% 
   map(group_by, Field) %>% 
   map_df( ~ summarise_all(.x, list(mean), na.rm = T)) %>% 
   group_by(Field) %>% 
@@ -287,7 +224,7 @@ d50 %>%
 ## By Rank
 ```{r fig.asp=.3}
 d50 %>% 
-  map(select, Rank, SciNorms:OrgJust) %>% 
+  map(select, Rank, !!!syms(evs)) %>% 
   map(group_by, Rank) %>% 
   map_df( ~ summarise_all(.x, list(mean), na.rm = T)) %>% 
   group_by(Rank) %>% 
@@ -304,7 +241,7 @@ d50 %>%
 ## By Gender
 ```{r fig.asp=.3}
 d50 %>% 
-  map(select, Gender, SciNorms:OrgJust) %>% 
+  map(select, Gender, !!!syms(evs)) %>% 
   map(group_by, Gender) %>% 
   map_df( ~ summarise_all(.x, list(mean), na.rm = T)) %>% 
   group_by(Gender) %>% 
@@ -321,7 +258,7 @@ d50 %>%
 ## By Research
 ```{r fig.asp=.3}
 d50 %>% 
-  map(select, Research, SciNorms:OrgJust) %>% 
+  map(select, Research, !!!syms(evs)) %>% 
   map(group_by, Research) %>% 
   map_df( ~ summarise_all(.x, list(mean), na.rm = T)) %>% 
   group_by(Research) %>% 
@@ -338,7 +275,7 @@ d50 %>%
 ## By Support
 ```{r fig.asp=.3}
 d50 %>% 
-  map(select, Support, SciNorms:OrgJust) %>% 
+  map(select, Support, !!!syms(evs)) %>% 
   map(group_by, Support) %>% 
   map_df( ~ summarise_all(.x, list(mean), na.rm = T)) %>% 
   group_by(Support) %>% 
@@ -355,17 +292,16 @@ d50 %>%
 # 3.2 EVS correlation matrix 
 
 ```{r}
-scales <- d50 %>% map(select, SciNorms:OrgJust) %>%  
-  map(cor, use = "complete")
+z <- d50 %>% map(select, !!!syms(evs)) %>%  
+  map(cor, use = "complete") %>% 
+  Reduce("+", .)/50
 
+z <- round(z, 2)
 
-mean_cor <- scales[[1]] 
-for(i in 2:50) mean_cor <- mean_cor + scales[[i]] 
-
-z <- round(mean_cor / 50, 2) 
 z[upper.tri(z)] <- ""
-z <- as.data.frame(z)
-z %>%  kbl(caption = "Correlation matrix, averaged over 50 completed data sets") %>% 
+
+
+ z %>% kbl(caption = "Correlation matrix, averaged over 50 completed data sets") %>% 
   kable_styling(font_size = 10, position = "left")  
 
 ```
@@ -716,7 +652,15 @@ d50[[1]] %>% select(Support, !!!syms(paste0(qrp, "_raw"))) %>%
 
 # 4A.3 Means and SDs QRPs 
 
-### By Field
+## Overall
+```{r}
+d50[[1]] %>% 
+  select(!!!syms(qrp)) %>% 
+  summarise_all(list(mean = mean, sd = sd), na.rm = T) %>% 
+  pivot_longer(everything(), names_to = c("scale", ".value"), names_sep = "_") %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
+```
+## By Field
 
 ```{r}
 d50[[1]] %>% 
@@ -724,10 +668,9 @@ d50[[1]] %>%
   group_by(Field) %>% 
   summarise_all(list(mean = mean, sd = sd), na.rm = T) %>% 
   pivot_longer(cols = -Field, names_to = c("scale", ".value"), names_sep = "_") %>% 
-  mutate(across(where(is.numeric),  round, 2)) %>% 
   arrange(scale) %>% 
   relocate(scale, .before = Field) %>% 
-  kbl() %>% kable_styling(font_size = 10, full_width = F, position = "left")
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
 
@@ -780,6 +723,15 @@ d50[[1]] %>%
 ```
 
 # 4A.4 Means and SDs RRPs 
+
+## Overall
+```{r}
+d50[[1]] %>% 
+  select(!!!syms(rrp)) %>% 
+  summarise_all(list(mean = mean, sd = sd), na.rm = T) %>% 
+  pivot_longer(everything(), names_to = c("scale", ".value"), names_sep = "_") %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
+```
 
 ## By Field
 
@@ -846,120 +798,133 @@ d50[[1]] %>%
 
 # 4A.5 Mean and SD all RRPs
 
+## Overall
 ```{r}
 d50[[1]] %>% 
-  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) 
+  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2))%>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left") 
 ```
 
 ## By Field
 ```{r}
 d50[[1]] %>% 
   group_by(Field) %>% 
-  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) 
+  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 ## By Rank
 ```{r}
 d50[[1]] %>% 
   group_by(Rank) %>% 
-  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) 
+  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 ## By Gender
 ```{r}
 d50[[1]] %>% 
   group_by(Gender) %>% 
-  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) 
+  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 ## By Research
 ```{r}
 d50[[1]] %>% 
   group_by(Research) %>% 
-  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) 
+  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
 ## By Support
 ```{r}
 d50[[1]] %>% 
   group_by(Support) %>% 
-  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) 
+  summarise(mean = round(mean(RRP_ave), 2), sd = round(sd(RRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
 
 
-## 4A.6 Mean and SD all QRPs
+# 4A.6 Mean and SD all QRPs
 
+## Overall
 ```{r}
 d50[[1]] %>% 
-  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) 
+  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
-
 
 ## By Field
 ```{r}
 d50[[1]] %>% 
   group_by(Field) %>% 
-  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) 
+  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 
 ```
 ## By Rank
 ```{r}
 d50[[1]] %>% 
   group_by(Rank) %>% 
-  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) 
+  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
-## By Field
+## By Gender
 ```{r}
 d50[[1]] %>% 
   group_by(Gender) %>% 
-  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) 
+  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 ## By Research
 ```{r}
 d50[[1]] %>% 
   group_by(Research) %>% 
-  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) 
+  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
 ## By Support
 ```{r}
 d50[[1]] %>% 
   group_by(Support) %>% 
-  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) 
+  summarise(mean = round(mean(QRP_ave), 2), sd = round(sd(QRP_ave), 2)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
 # 4A.7 Prevalence any QRP
 
 ## Overall
 ```{r}
-d50[[1]] %$% prop.table(xtabs(~ QRP_1))%>% as.data.frame %>%
-  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F,  position = "left") 
+d50[[1]] %>% summarise(prevalence = mean(QRP_1)) %>% 
+  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 ## By Field
 ```{r}
-d50[[1]] %$% prop.table(xtabs(~ Field + QRP_1)) %>% as.data.frame %>%
+d50[[1]] %>% group_by(Field) %>% summarise(prevalence = mean(QRP_1)) %>% 
   kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left") 
 ```
 
 ## By Rank
 ```{r}
-d50[[1]] %$% prop.table(xtabs(~ Rank + QRP_1)) %>% as.data.frame %>%
+d50[[1]] %>% group_by(Rank) %>% summarise(prevalence = mean(QRP_1)) %>% 
   kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left") 
 ```
 
 ## By Gender
 ```{r}
-d50[[1]] %$% prop.table(xtabs(~ Gender + QRP_1)) %>% as.data.frame %>%
+d50[[1]] %>% group_by(Gender) %>% summarise(prevalence = mean(QRP_1)) %>% 
   kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left") 
 ```
 
 ## By Research
 ```{r}
-d50[[1]] %$% prop.table(xtabs(~ Research + QRP_1)) %>% as.data.frame %>% 
+d50[[1]] %>% group_by(Research) %>% summarise(prevalence = mean(QRP_1)) %>% 
   kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left") 
 ```
 
 ## By Support
 ```{r}
-d50[[1]] %$% prop.table(xtabs(~ Support + QRP_1))%>% as.data.frame %>%
+d50[[1]] %>% group_by(Support) %>% summarise(prevalence = mean(QRP_1)) %>% 
   kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left") 
 ```
 
@@ -1111,6 +1076,8 @@ d50[[1]] %>%
 
 # 4C.1 Linear regressions RRPs
 
+Adjusted p-values based on "fdr" method
+iris
 ```{r}
 model <- RRP_ave ~ Field + Rank + Gender + Research + Support
 ```
@@ -1123,7 +1090,8 @@ d50 %>% map(lm, formula = update(model, ~ . + SciNorms + PeerNorms + WorkPress +
                                    DetectRev + Mentoring + OrgJust)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error, 
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>% 
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1138,7 +1106,8 @@ d50 %>% map(lm, formula = update(model, ~ . + SciNorms + PeerNorms + WorkPress +
 d50 %>% map(lm, formula = model) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>% 
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1153,7 +1122,8 @@ d50 %>% map(lm, formula = model) %>%
 d50 %>% map(lm, formula = update(model, ~ . + SciNorms)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>% 
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1168,7 +1138,8 @@ d50 %>% map(lm, formula = update(model, ~ . + SciNorms)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + PeerNorms)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%  
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1182,7 +1153,8 @@ d50 %>% map(lm, formula = update(model, ~ . + PeerNorms)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + WorkPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>% 
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1197,7 +1169,8 @@ d50 %>% map(lm, formula = update(model, ~ . + WorkPress)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + PubPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>% 
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1211,7 +1184,8 @@ d50 %>% map(lm, formula = update(model, ~ . + PubPress)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + FundPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%  
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1226,7 +1200,8 @@ d50 %>% map(lm, formula = update(model, ~ . + FundPress)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Competitive)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%  
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1240,7 +1215,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Competitive)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + DetectCol)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>% 
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1255,7 +1231,8 @@ d50 %>% map(lm, formula = update(model, ~ . + DetectCol)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + DetectRev)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>% 
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1270,7 +1247,8 @@ d50 %>% map(lm, formula = update(model, ~ . + DetectRev)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Mentoring)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%  
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1285,8 +1263,11 @@ d50 %>% map(lm, formula = update(model, ~ . + Mentoring)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + OrgJust)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(across(where(is.numeric), round, 2)) %>% 
-  kbl() %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%  
+  rename(t.value = statistic) %>% 
+  select(-df) %>% 
+  kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
@@ -1297,7 +1278,8 @@ d50 %>% map(lm, formula = update(model, ~ . + OrgJust)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*Rank)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1311,7 +1293,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*Rank)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*Competitive)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%  
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1325,7 +1308,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*Competitive)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*DetectCol)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%  
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1339,7 +1323,11 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*DetectCol)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*DetectRev)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(across(where(is.numeric), round, 2)) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%  
+  rename(t.value = statistic) %>% 
+  select(-df) %>% 
+  relocate(c(min95, max95), .before = std.error) %>% 
   kbl() %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -1350,7 +1338,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*DetectRev)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Rank*FundPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1365,7 +1354,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Rank*FundPress)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*PubPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1375,6 +1365,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*PubPress)) %>%
 
 
 # 4C.2 Linear regressions QRPs
+
+Adjusted p-values based on "fdr" method
 
 ```{r}
 model <- QRP_ave ~ Field + Rank + Gender + Research + Support
@@ -1389,7 +1381,8 @@ d50 %>% map(lm, formula = update(model, ~ . + SciNorms + PeerNorms + WorkPress +
                                    DetectRev + Mentoring + OrgJust)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1405,7 +1398,8 @@ d50 %>% map(lm, formula = update(model, ~ . + SciNorms + PeerNorms + WorkPress +
 d50 %>% map(lm, formula = model) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1420,7 +1414,8 @@ d50 %>% map(lm, formula = model) %>%
 d50 %>% map(lm, formula = update(model, ~ . + SciNorms)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1435,7 +1430,8 @@ d50 %>% map(lm, formula = update(model, ~ . + SciNorms)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + PeerNorms)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1449,7 +1445,8 @@ d50 %>% map(lm, formula = update(model, ~ . + PeerNorms)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + WorkPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1464,7 +1461,8 @@ d50 %>% map(lm, formula = update(model, ~ . + WorkPress)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + PubPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%    
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1478,7 +1476,8 @@ d50 %>% map(lm, formula = update(model, ~ . + PubPress)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + FundPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1493,7 +1492,8 @@ d50 %>% map(lm, formula = update(model, ~ . + FundPress)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Competitive)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1507,7 +1507,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Competitive)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + DetectCol)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%    
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1522,7 +1523,8 @@ d50 %>% map(lm, formula = update(model, ~ . + DetectCol)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + DetectRev)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1537,7 +1539,8 @@ d50 %>% map(lm, formula = update(model, ~ . + DetectRev)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Mentoring)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1552,7 +1555,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Mentoring)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + OrgJust)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1567,7 +1571,8 @@ d50 %>% map(lm, formula = update(model, ~ . + OrgJust)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*Rank)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1582,7 +1587,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*Rank)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*Competitive)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1596,7 +1602,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*Competitive)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*DetectCol)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%   
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1610,7 +1617,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*DetectCol)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*DetectRev)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%    
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1624,7 +1632,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Field*DetectRev)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Rank*FundPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%    
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1639,7 +1648,8 @@ d50 %>% map(lm, formula = update(model, ~ . + Rank*FundPress)) %>%
 d50 %>% map(lm, formula = update(model, ~ . + Field*PubPress)) %>% 
   pool %>% 
   summary  %>% 
-  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error) %>% 
+  mutate(min95 = estimate - 1.96*std.error, max95 = estimate + 1.96*std.error,
+         p_adj = p.adjust(p.value, method = "fdr", n = 20)) %>%    
   rename(t.value = statistic) %>% 
   select(-df) %>% 
   relocate(c(min95, max95), .before = std.error) %>% 
@@ -1678,7 +1688,8 @@ d50 %>% map(glm, formula = update(model, ~ . + SciNorms + PeerNorms + WorkPress 
                                    DetectRev + Mentoring + OrgJust), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1695,7 +1706,8 @@ d50 %>% map(glm, formula = update(model, ~ . + SciNorms + PeerNorms + WorkPress 
 d50 %>% map(glm, formula = model, family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1711,7 +1723,8 @@ d50 %>% map(glm, formula = model, family = "binomial") %>%
 d50 %>% map(glm, formula = update(model, ~ . + SciNorms), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1727,7 +1740,8 @@ d50 %>% map(glm, formula = update(model, ~ . + SciNorms), family = "binomial") %
 d50 %>% map(glm, formula = update(model, ~ . + PeerNorms), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1742,7 +1756,8 @@ d50 %>% map(glm, formula = update(model, ~ . + PeerNorms), family = "binomial") 
 d50 %>% map(glm, formula = update(model, ~ . + WorkPress), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1758,7 +1773,8 @@ d50 %>% map(glm, formula = update(model, ~ . + WorkPress), family = "binomial") 
 d50 %>% map(glm, formula = update(model, ~ . + PubPress), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1773,7 +1789,8 @@ d50 %>% map(glm, formula = update(model, ~ . + PubPress), family = "binomial") %
 d50 %>% map(glm, formula = update(model, ~ . + FundPress), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1789,7 +1806,8 @@ d50 %>% map(glm, formula = update(model, ~ . + FundPress), family = "binomial") 
 d50 %>% map(glm, formula = update(model, ~ . + Competitive), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1804,7 +1822,8 @@ d50 %>% map(glm, formula = update(model, ~ . + Competitive), family = "binomial"
 d50 %>% map(glm, formula = update(model, ~ . + DetectCol), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1820,7 +1839,8 @@ d50 %>% map(glm, formula = update(model, ~ . + DetectCol), family = "binomial") 
 d50 %>% map(glm, formula = update(model, ~ . + DetectRev), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1836,7 +1856,8 @@ d50 %>% map(glm, formula = update(model, ~ . + DetectRev), family = "binomial") 
 d50 %>% map(glm, formula = update(model, ~ . + Mentoring), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1852,7 +1873,8 @@ d50 %>% map(glm, formula = update(model, ~ . + Mentoring), family = "binomial") 
 d50 %>% map(glm, formula = update(model, ~ . + OrgJust), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1867,7 +1889,8 @@ d50 %>% map(glm, formula = update(model, ~ . + OrgJust), family = "binomial") %>
 d50 %>% map(glm, formula = update(model, ~ . + Field*Rank), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1883,7 +1906,8 @@ d50 %>% map(glm, formula = update(model, ~ . + Field*Rank), family = "binomial")
 d50 %>% map(glm, formula = update(model, ~ . + Field*Competitive), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1898,7 +1922,8 @@ d50 %>% map(glm, formula = update(model, ~ . + Field*Competitive), family = "bin
 d50 %>% map(glm, formula = update(model, ~ . + Field*DetectCol), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1913,7 +1938,8 @@ d50 %>% map(glm, formula = update(model, ~ . + Field*DetectCol), family = "binom
 d50 %>% map(glm, formula = update(model, ~ . + Field*DetectRev), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1928,7 +1954,8 @@ d50 %>% map(glm, formula = update(model, ~ . + Field*DetectRev), family = "binom
 d50 %>% map(glm, formula = update(model, ~ . + Rank*FundPress), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1944,7 +1971,8 @@ d50 %>% map(glm, formula = update(model, ~ . + Rank*FundPress), family = "binomi
 d50 %>% map(glm, formula = update(model, ~ . + Field*PubPress), family = "binomial") %>% 
   pool %>% 
   summary  %>% 
-  mutate(OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
+  mutate(p_adj = p.adjust(p.value, method = "fdr", n = 20), 
+         OddsRatio = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)), 
          min95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate - 1.96 * std.error)),
          max95     = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate + 1.96 * std.error))) %>% 
   rename(t.value = statistic) %>% 
@@ -1958,6 +1986,28 @@ d50 %>% map(glm, formula = update(model, ~ . + Field*PubPress), family = "binomi
 
 # 4C.4 Ordinal regressions FF
 
+## Interpretation coefficients
+
+The model estimates the probabilities of sum scores is less than 1 and less than 2.
+
+- `alpha1` is the intercept for the probability of sum score less than 1 (hence 0)
+
+- `alpha2` is the intercept for the probability of sum score less than 2 (hence 0 or 1)
+
+<br>
+
+Interpretation odds ratios: 
+
+- the odds $\frac{P(0)}{P(1,2)}$ and $\frac{P(0,1)}{P(2)}$ change with a factor `OddsRatio`
+
+    + with each unit increase in a continuous predictor
+    
+    + compared to the reference category for a categorical predictor
+    
+
+holding all other predictors constant.
+
+
 
 ## Base set + all EVS
 
@@ -1966,6 +2016,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, SciN
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -1973,66 +2024,21 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, SciN
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:2, 6:8, 16:17, 10:11, 18, 20, 19, 14, 21, 15, 9, 3:5, 12:13), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
-
-
-## Interpretation model
-
-
-For $i\in\{1,\dots,n\}%$, the proportional model is defined as 
-
-$$\mathrm{logit}(FF_i<{j}) = \alpha_j + \boldsymbol{x}'_i\boldsymbol\beta, \ \ \ \ j\in\{1,2\}$$
-
-where $FF\in\{0,1,2\}$ denotes the sum score on Falsification and Fabrication,  $\boldsymbol{x}_i=(1, x_1, \dots, x_p)'$ the vector with the constant and predictors scores, $\alpha_1, \alpha_2$ are intercepts, and $\boldsymbol{\beta}=(\beta_1,\dots,\beta_p)'$ the corresponding vector with regression coefficients.
-
-
-For $\boldsymbol{x}_i=\boldsymbol{0}$ (all predictors having value 0), the probability of having a sum score of 0 is computed as
-
-$$\mathrm{odds}(FF_i<1\mid\boldsymbol{x}_i=\boldsymbol{0})=\exp(\alpha_1)=\exp(2.651)\approx14.2$$
-which corresponds to the probability
-
-
-$$P(FF_i<1\mid\boldsymbol{x}_i=\boldsymbol{0})=\frac{\exp(\alpha_1)}{1+\exp(\alpha_1)}=\frac{14.2}{15.2}=0.934$$
-For $\alpha_2=9.553$, the probability of having a sum score less than 2 (i.e. 0 or 1) is
-
-$$P(FF_i<2\mid\boldsymbol{x}_i=\boldsymbol{0})=\frac{\exp(\alpha_2)}{1+\exp(\alpha_2)}=\frac{\exp(9.553)}{1+\exp(9.553)}\approx1$$
-The odds ratio of a predictor denotes the relative change in $$\mathrm{odds}(FF_i\leq0\mid\boldsymbol{x}_i=\boldsymbol{0})$$ for a unit increase in predictor that predictor. Since the explanatory variable scale are standardized, a unit increase corresponds to a standard deviation increase. So for `SciNorms` with an odds ratio of 1.26 we have
-
-
-$$\mathrm{odds}(FF<1\mid SciNorms=1)=1.26\times\mathrm{odds}(FF<1\mid SciNorms=0)$$
-holding the all other predictors constant. With all other predictors fixed at 0, the odds of a sum score of 0 for `SciNorms = 1` are 17.9, which corresponds to a probability 0.947. 
-
-
-The figure below depicts the effect of `SciNorms` on $P(FF<1)$ and $P(FF<2)$, holding all other predictors at 0. To show the full length of the curves the scale for `SciNorms` runs from -25 to 5, but in the sample only scores where between -6.15 and 1.30 were observed, as denoted by the grey area in the plot.
-
-```{r}
-
-x  <-  seq(-25, 5, length.out = 100) 
-y0 <- 1 / (1 + exp(-.48*x - 2.65))
-y1 <- 1 / (1 + exp(-.48*x - 9.55))
-data.frame(x = c(x, x), y = c(y0, y1), 
-           sumscore = factor(rep(c("P(FF < 1)", "P(FF < 2)"), each = 100))) %>% 
-  ggplot() +
-  geom_line(aes(x, y, col = sumscore)) +
-  annotate("rect", xmin = -6.15, xmax = 1.31, ymin = 0, ymax = 1, fill="grey", alpha=.3) +
-  labs(x = "SciNorms", y = "prob") +
-  theme_minimal() +
-  theme(legend.title = element_blank()) 
-```
-
-
 
 
 
 ## Base set
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2040,6 +2046,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 8:9, 6:7, 10:11), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2047,10 +2054,11 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research) %>%
 ## Base set + SciNorms
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, SciNorms) %>% 
+t <- d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, SciNorms) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2058,6 +2066,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, SciNorms) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 8:9, 6:7, 10, 12, 11), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2065,10 +2074,11 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, SciNorms) %>%
 ## Base set + PeerNorms
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PeerNorms) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, PeerNorms) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2076,6 +2086,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PeerNorms) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 9:10, 6:7, 11:12, 8), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2083,10 +2094,11 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PeerNorms) %>%
 ## Base set + PubPress
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PubPress) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, PubPress) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2094,6 +2106,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PubPress) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 9:10, 6:7, 11:12, 8), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2102,10 +2115,11 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PubPress) %>%
 ## Base set + FundPress
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, FundPress) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2113,18 +2127,20 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 9:10, 7:8, 11:12, 6), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
 
-## Base set + FundPress
+## Base set + WorkPress
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, WorkPress) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2132,6 +2148,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 8:9, 6:7, 10:11, 12), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2140,10 +2157,11 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>%
 ## Base set + Competitives
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Competitive) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, Competitive) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2151,6 +2169,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Competitive) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:2, 4:6, 7:8, 9:12, 3), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2159,10 +2178,11 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Competitive) %>%
 ## Base set + DetectCol
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectCol) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, DetectCol) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2170,6 +2190,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectCol) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:2, 4:6, 7:8, 9:12, 3), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2177,22 +2198,11 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectCol) %>%
 ## Base set + DetectRev
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectRev) %>% 
-  map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
-  summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
-  mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z))) %>%
-  select(-var_between, -var_within) %>% 
-  kbl(digits = 2) %>% kable_styling(font_size = 10, full_width = F, position = "left")
-```
-
-
-## Base set + Mentoring
-
-```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Mentoring) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, DetectRev) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2200,6 +2210,28 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Mentoring) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:2, 4:6, 7:8, 9:12, 3), ] %>% 
+  kbl(digits = 3) %>% 
+  kable_styling(font_size = 10, full_width = F, position = "left")
+```
+
+
+## Base set + Mentoring
+
+```{r}
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, Mentoring) %>% 
+  map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
+  summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
+  mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
+         OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
+                             as.numeric(NA), exp(est)), 
+         min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
+                             as.numeric(NA),  exp(est - 1.96 * se)),
+         max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
+                             as.numeric(NA), exp(est + 1.96 * se))) %>%
+  select(-var_between, -var_within) %>% 
+  .[c(1:5, 9:10, 6:7, 11:12, 8), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2209,10 +2241,11 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Mentoring) %>%
 ## Base set + OrgJust
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, OrgJust) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, OrgJust) %>% 
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2220,15 +2253,16 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, OrgJust) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 9:10, 6:7, 11:12, 8), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
 
-## Base set + Field
+## Base set + Field*Rank
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support) %>% 
   map(~ .x %>%  mutate(PostDocxArtsHum  = if_else(Rank == "Postdoc" & Field == 'Arts & Hum' , 1, 0),
                        PostDocxEngNat   = if_else(Rank == "Postdoc" & Field == 'Eng & Nat', 1, 0),
                        PostDocxBioLife  = if_else(Rank == "Postdoc" & Field == 'Bio & Life', 1, 0),
@@ -2238,6 +2272,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research) %>%
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2245,8 +2280,9 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 14:15, 6:7, 16:17, 8:13), ] %>% 
   kbl(digits = 3) %>% 
-  kable_styling(font_size = 10, full_width = F, position = "left")
+  kable_styling(font_size = 10, full_width = F, position = "left") 
 ```
 
 
@@ -2255,7 +2291,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research) %>%
 ## Base set + Field*Competitive
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Competitive) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, Competitive) %>% 
   map(~ .x %>%  mutate(CompxArtsHum  = if_else(Field == 'Arts & Hum' , 1, 0),
                        CompxEngNat   = if_else(Field == 'Eng & Nat', 1, 0),
                        CompxBioLife  = if_else(Field == 'Bio & Life', 1, 0),
@@ -2265,6 +2301,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Competitive) %>%
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2272,6 +2309,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Competitive) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:2, 7:9, 12:13, 10:11, 14:15, 3:6), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2281,7 +2319,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Competitive) %>%
 ## Base set + Field*DetectCol
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectCol) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, DetectCol) %>% 
   map(~ .x %>%  mutate(DColxArtsHum  = if_else(Field == 'Arts & Hum' , 1, 0),
                        DColxEngNat   = if_else(Field == 'Eng & Nat', 1, 0),
                        DColxBioLife  = if_else(Field == 'Bio & Life', 1, 0),
@@ -2291,6 +2329,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectCol) %>%
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2298,6 +2337,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectCol) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:2, 7:9, 12:13, 10:11, 14:15, 6, 3:5), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2307,7 +2347,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectCol) %>%
 ## Base set + Field*DetectRev
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectRev) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, DetectRev) %>% 
   map(~ .x %>%  mutate(DRevxArtsHum  = if_else(Field == 'Arts & Hum' , 1, 0),
                        DRevxEngNat   = if_else(Field == 'Eng & Nat', 1, 0),
                        DRevxBioLife  = if_else(Field == 'Bio & Life', 1, 0),
@@ -2317,6 +2357,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectRev) %>%
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2324,6 +2365,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectRev) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:2, 7:9, 12:13, 10:11, 14:15, 3:6), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2331,7 +2373,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, DetectRev) %>%
 ## Base set + Rank*FundPress
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, FundPress) %>% 
   map(~ .x %>%  mutate(FPressxPostdoc  = if_else(Rank == 'Postdoc' , 1, 0),
                        FPressxProf     = if_else(Rank == 'Prof', 1, 0),
                        FPressxPostdoc  = FPressxPostdoc * FundPress,
@@ -2339,6 +2381,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>%
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2346,6 +2389,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 11:12, 9:10, 13:14, 8, 6:7), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
@@ -2354,7 +2398,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, FundPress) %>%
 ## Base set + Rank*PubPress
 
 ```{r}
-d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PubPress) %>% 
+d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, Gender, Support, PubPress) %>% 
   map(~ .x %>%  mutate(PPressxPostdoc  = if_else(Rank == 'Postdoc' , 1, 0),
                        PPressxProf     = if_else(Rank == 'Prof', 1, 0),
                        PPressxPostdoc  = PPressxPostdoc * PubPress,
@@ -2362,6 +2406,7 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PubPress) %>%
   map(RRpropodds) %>% reduce(rbind) %>% group_by(pars) %>% 
   summarise(est = mean(bhat), var_between = var(bhat), var_within = mean(bvar)) %>% 
   mutate(se = sqrt(var_within + 1.02 *var_between), z = est / se, p = 2 * pnorm(-abs(z)),
+         p_adj = p.adjust(p, method = "fdr", n = length(p)), 
          OddsRatio = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est)), 
          min95     = if_else(pars %in% c('alpha1', 'alpha2'), 
@@ -2369,12 +2414,18 @@ d50 %>% map(select, RRfabr, RRfals, Field, Rank, Research, PubPress) %>%
          max95     = if_else(pars %in% c('alpha1', 'alpha2'), 
                              as.numeric(NA), exp(est + 1.96 * se))) %>%
   select(-var_between, -var_within) %>% 
+  .[c(1:5, 11:12, 6:7, 13:14, 10, 8:9), ] %>% 
   kbl(digits = 3) %>% 
   kable_styling(font_size = 10, full_width = F, position = "left")
 ```
 
 
 
+# SessionInfo
+
+```{r}
+sessionInfo()
+```
 
 
 
