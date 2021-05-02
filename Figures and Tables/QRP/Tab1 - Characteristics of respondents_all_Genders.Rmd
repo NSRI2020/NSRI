@@ -73,7 +73,7 @@ load(file = "../Workspaces/5. Preparation Imputed Datasets.Rdata")
 
 # Female
 ```{r echo = FALSE}
-# Female
+# Gender
 r1a <- d50[[1]] %$% table(Gender, Field)[, c(4, 1, 3, 2)]
 r1b <- d50[[1]] %$% table(Gender, Rank)
 Overall <- d50[[1]] %$% table(Gender)
@@ -82,7 +82,7 @@ r2b <- d50[[1]] %$% table(Gender, Rank) %>% prop.table(margin = 2) %>% .[2, c(1:
 r2c <- d50[[1]] %$% table(Gender) %>% prop.table %>% .[2]
 Row1 <- rbind(cbind(r1a, r1b, Overall), paste0("(", round(c(r2a, r2b, r2c), 3),")"))
 rownames(Row1) <- c("Undisclosed N", "Female N", "Male N", "Female %")
-# Empirical engagement
+# Research
 r1a <- d50[[1]] %$% table(Research, Field)["Yes", c(4, 1, 3, 2)]
 r1b <- d50[[1]] %$% table(Research, Rank)["Yes",]
 r1c <- d50[[1]] %$% table(Research)["Yes"]
@@ -91,7 +91,7 @@ r2b <- d50[[1]] %$% table(Research, Rank) %>% prop.table(margin = 2) %>% .["Yes"
 r2c <- d50[[1]] %$% table(Research) %>% prop.table %>% .["Yes"]*100  
 Row2 <- rbind(c(r1a, r1b, r1c), paste0("(", round(c(r2a, r2b, r2c), 3),")"))
 rownames(Row2) <- c("Empirical N", "Empirical %")
-# Female
+# Support
 r1a <- d50[[1]] %$% table(Support, Field)["Yes", c(4, 1, 3, 2)]
 r1b <- d50[[1]] %$% table(Support, Rank)["Yes",]
 r1c <- d50[[1]] %$% table(Support)["Yes"]

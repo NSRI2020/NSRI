@@ -67,7 +67,7 @@ library(RRreg)    # Randomized Response
 
 # Load the data
 ```{r}
-load(file = "../Workspaces/5. Preparation Imputed Datasets.Rdata")
+load(file = "../../Workspaces/5. Preparation Imputed Datasets.Rdata")
 options(DT.options = list(pageLength = 50)) # table options
 ```
 
@@ -105,8 +105,8 @@ RR1 <- function(df){
 # Means
 ```{r echo = FALSE}
 Overall <- d50[[1]] %>% 
-  select(contains("Q")) %>% # select relevant columns
-  select(!contains("_")) %>% # exclude raw
+  select(contains("Q"), QRP_ave) %>% # select relevant columns
+  select(!contains("_"), QRP_ave) %>% # exclude raw
   melt(variable.name = "Practices") %>% 
   group_by(Practices) %>% 
   summarise_all(list(n = length, mean = mean, sd = sd)) %>% 
@@ -120,8 +120,8 @@ mci.overall <- Overall %>% select(Practices, m.ci) %>% rename(Overall = m.ci)
 ```
 ```{r echo = FALSE}
 Field <- d50[[1]] %>% 
-  select(contains("Q"), Field) %>% # select relevant columns
-  select(!contains("_"), Field) %>% # exclude raw
+  select(contains("Q"), QRP_ave,  Field) %>% # select relevant columns
+  select(!contains("_"), QRP_ave, Field) %>% # exclude raw
   melt(id.vars = "Field", variable.name = "Practices", value.name = "Response") %>% 
   group_by(Field, Practices) %>% 
   summarise_all(list(n = length, mean = mean, sd = sd)) %>% 
@@ -137,8 +137,8 @@ mci.Field <- Field %>% dcast(Practices ~ Field, value.var = "m.ci") %>% .[, c(1,
 
 ```{r echo = FALSE}
 Rank <- d50[[1]] %>% 
-  select(contains("Q"), Rank) %>% # select relevant columns
-  select(!contains("_"), Rank) %>% # exclude raw
+  select(contains("Q"), QRP_ave, Rank) %>% # select relevant columns
+  select(!contains("_"), QRP_ave, Rank) %>% # exclude raw
   melt(id.vars = "Rank", variable.name = "Practices", value.name = "Response") %>% 
   group_by(Rank, Practices) %>% 
   summarise_all(list(n = length, mean = mean, sd = sd)) %>% 
@@ -154,7 +154,7 @@ mci.Rank <- Rank %>% mutate(m.ci = paste(mean, ci, sep = " ")) %>% dcast(Practic
 ```{r echo = FALSE}
 Means <- merge(mci.Field, mci.Rank, by.x = "Practices")
 Means <- merge(Means, mci.overall, by.x = "Practices")
-
+Means <- Means[c(1:7, 9:12, 8), dd]
 datatable(Means)
 Means
 ```
