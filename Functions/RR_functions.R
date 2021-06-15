@@ -105,7 +105,7 @@ RRpropodds <- function(df){
       
     xb        <- x %*% b
     
-    cum.probs <- exp(alpha + c(xb)) / (1 + exp(alpha + c(xb)))
+    cum.probs <- exp(alpha - c(xb)) / (1 + exp(alpha - c(xb)))
       
     } else {
       
