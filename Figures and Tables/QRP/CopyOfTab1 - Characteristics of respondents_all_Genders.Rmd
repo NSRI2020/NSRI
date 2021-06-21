@@ -1,0 +1,673 @@
+---
+title: "Table 1"
+author: "Gerko Vink"
+date: Characteristics of respondents by background variables and by the 10 explanatory
+  variable scales
+output:
+  html_document:
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+    number_sections: no
+  word_document:
+    toc: yes
+    toc_depth: '5'
+always_allow_html: true
+---
+
+<style type="text/css">
+  
+body{ /* Normal  */
+  font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 12px;
+}
+h1.title {
+  font-size: 18px;
+  color: DarkBlue;
+}
+h1 { /* Header 1 */
+  font-size: 18px;
+}
+h2 { /* Header 2 */
+  font-size: 18px;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+}
+code.r{ /* Code block */
+  font-size: 12px;
+}
+pre { /* Code block - determines code spacing between lines */
+  font-size: 14px;
+}
+</style>
+
+
+---
+
+# Packages used
+For this document we use the following packages
+```{r message=FALSE, warning=FALSE}
+library(dplyr)    # Data manipulation
+library(mice)     # Data imputation
+library(magrittr) # Pipes
+library(purrr)    # Functional programming
+library(haven)    # Import data
+library(DT)       # Interactive tables
+library(ggplot2)  # Plotting device
+library(reshape2) # Data shaping
+library(labelled) # Advanced labelling
+library(tibble)   # Tibbles
+```
+
+---
+
+# Load the data
+```{r}
+load(file = "../../Workspaces/5. Preparation Imputed Datasets.Rdata")
+```
+
+---
+
+# Female
+```{r echo = FALSE}
+# Gender
+r1a <- d50[[1]] %$% table(Gender, Field)[, c(4, 1, 3, 2)]
+r1b <- d50[[1]] %$% table(Gender, Rank)
+Overall <- d50[[1]] %$% table(Gender)
+r2a <- d50[[1]] %$% table(Gender, Field) %>% prop.table(margin = 2) %>% .[2, c(4, 1, 3, 2)]*100 
+r2b <- d50[[1]] %$% table(Gender, Rank) %>% prop.table(margin = 2) %>% .[2, c(1:3)]*100 
+r2c <- d50[[1]] %$% table(Gender) %>% prop.table %>% .[2]
+Row1 <- rbind(cbind(r1a, r1b, Overall), paste0("(", round(c(r2a, r2b, r2c), 3),")"))
+rownames(Row1) <- c("Undisclosed N", "Female N", "Male N", "Female %")
+# Research
+r1a <- d50[[1]] %$% table(Research, Field)["Yes", c(4, 1, 3, 2)]
+r1b <- d50[[1]] %$% table(Research, Rank)["Yes",]
+r1c <- d50[[1]] %$% table(Research)["Yes"]
+r2a <- d50[[1]] %$% table(Research, Field) %>% prop.table(margin = 2) %>% .["Yes", c(4, 1, 3, 2)]*100 
+r2b <- d50[[1]] %$% table(Research, Rank) %>% prop.table(margin = 2) %>% .["Yes",]*100 
+r2c <- d50[[1]] %$% table(Research) %>% prop.table %>% .["Yes"]*100  
+Row2 <- rbind(c(r1a, r1b, r1c), paste0("(", round(c(r2a, r2b, r2c), 3),")"))
+rownames(Row2) <- c("Empirical N", "Empirical %")
+# Support
+r1a <- d50[[1]] %$% table(Support, Field)["Yes", c(4, 1, 3, 2)]
+r1b <- d50[[1]] %$% table(Support, Rank)["Yes",]
+r1c <- d50[[1]] %$% table(Support)["Yes"]
+r2a <- d50[[1]] %$% table(Support, Field) %>% prop.table(margin = 2) %>% .["Yes", c(4, 1, 3, 2)]*100 
+r2b <- d50[[1]] %$% table(Support, Rank) %>% prop.table(margin = 2) %>% .["Yes",]*100 
+r2c <- d50[[1]] %$% table(Support) %>% prop.table %>% .["Yes"]*100  
+Row3 <- rbind(c(r1a, r1b, r1c), paste0("(", round(c(r2a, r2b, r2c), 3),")"))
+rownames(Row3) <- c("Support N", "Support %")
+# Means
+evs  <- c("SciNorms", "PeerNorms", "WorkPress", "PubPress", "FundPress",
+         "Competitive","DetectCol", "DetectRev", "Mentoring", "OrgJust")
+#Overall
+Overall <- rbind(
+  d50 %>% map(select, SciNorms) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, PeerNorms) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, WorkPress) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, PubPress) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, FundPress) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, Competitive) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, DetectCol) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, DetectRev) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, Mentoring) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, OrgJust) %>% 
+  map(~.x %>% mean_cl_normal %>% round(4)) %>% 
+  Reduce("+", .) / 50) 
+Overall %<>% 
+  mutate(ci = paste("(", ymin, ",", ymax, ")", sep = ""))
+rownames(Overall) <- evs
+m.overall <- Overall$y
+ci.overall <- Overall$ci
+#biomed
+bio <- rbind(
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(SciNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(PeerNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(WorkPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(PubPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(FundPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(Competitive) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(DetectCol) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(DetectRev) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(Mentoring) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Bio & Life") %>% 
+              select(OrgJust) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50) %>% 
+  round(3) %>% 
+  mutate(ci = paste("(", ymin, ",", ymax, ")", sep = ""))
+rownames(bio) <- evs
+m.bio <- bio$y
+ci.bio <- bio$ci
+
+
+
+
+#socialmed
+social <- rbind(
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(SciNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(PeerNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(WorkPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(PubPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(FundPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(Competitive) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(DetectCol) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(DetectRev) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(Mentoring) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(OrgJust) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50) %>% 
+  round(3) %>% 
+  mutate(ci = paste("(", ymin, ",", ymax, ")", sep = ""))
+rownames(social) <- evs
+m.social <- social$y
+ci.social <- social$ci
+
+
+
+#artshummed
+artshum <- rbind(
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(SciNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(PeerNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(WorkPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(PubPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(FundPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(Competitive) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(DetectCol) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(DetectRev) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(Mentoring) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(OrgJust) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50) %>% 
+  round(3) %>% 
+  mutate(ci = paste("(", ymin, ",", ymax, ")", sep = ""))
+rownames(artshum) <- evs
+m.artshum <- artshum$y
+ci.artshum <- artshum$ci
+
+
+
+
+
+#Eng & Nat
+engnat <- rbind(
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(SciNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(PeerNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(WorkPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(PubPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(FundPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(Competitive) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(DetectCol) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(DetectRev) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(Mentoring) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(OrgJust) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50) %>% 
+  round(3) %>% 
+  mutate(ci = paste("(", ymin, ",", ymax, ")", sep = ""))
+rownames(engnat) <- evs
+m.engnat <- engnat$y
+ci.engnat <- engnat$ci
+
+
+#Phd
+phd <- rbind(
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(SciNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(PeerNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(WorkPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(PubPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(FundPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(Competitive) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(DetectCol) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(DetectRev) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(Mentoring) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(OrgJust) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50) %>% 
+  round(3) %>% 
+  mutate(ci = paste("(", ymin, ",", ymax, ")", sep = ""))
+rownames(phd) <- evs
+m.phd <- phd$y
+ci.phd <- phd$ci
+
+
+
+
+#Postdoc
+postdoc <- rbind(
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(SciNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(PeerNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(WorkPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(PubPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(FundPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(Competitive) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(DetectCol) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(DetectRev) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(Mentoring) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(OrgJust) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50) %>% 
+  round(3) %>% 
+  mutate(ci = paste("(", ymin, ",", ymax, ")", sep = ""))
+rownames(postdoc) <- evs
+m.postdoc <- postdoc$y
+ci.postdoc <- postdoc$ci
+
+#Prof
+prof <- rbind(
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(SciNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(PeerNorms) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(WorkPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(PubPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(FundPress) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(Competitive) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(DetectCol) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(DetectRev) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(Mentoring) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(OrgJust) %>% 
+              
+              mean_cl_normal()) %>% 
+  Reduce("+", .) / 50) %>% 
+  round(3) %>% 
+  mutate(ci = paste("(", ymin, ",", ymax, ")", sep = ""))
+rownames(prof) <- evs
+m.prof <- prof$y
+ci.prof <- prof$ci
+
+MeanCI <- cbind(
+c(rbind(m.bio, ci.bio)),
+c(rbind(m.social, ci.social)),
+c(rbind(m.engnat, ci.engnat)),
+c(rbind(m.artshum, ci.artshum)),
+c(rbind(m.phd, ci.phd)),
+c(rbind(m.postdoc, ci.postdoc)),
+c(rbind(m.prof, ci.prof)), 
+c(rbind(m.overall, ci.overall))
+)
+rownames(MeanCI) <- c(rbind(paste(evs, "MEAN", sep = "_"),
+                            paste(evs, "CI", sep = "_")))
+
+options(DT.options = list(pageLength = 50))
+rbind(Row1, Row2, Row3, MeanCI) %>% 
+  datatable(options = )
+
+rbind(Row1, Row2, Row3, MeanCI) %>% 
+  as.data.frame()
+```
+
+
+---
+
+# Session Info
+```{r}
+sessionInfo()
+```
+
+---
+
+# Document info
+Signed: 
+[Gerko Vink](https://www.gerkovink.com), 
+
+```{r}
+timestamp()
+```
+
+---
+
+END of DOCUMENT
