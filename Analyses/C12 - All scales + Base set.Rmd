@@ -113,7 +113,7 @@ base.fit <- d50 %>%
 
 # Multiply imputed repeated analysis 
 fit <- d50 %>% 
-  map(lm, formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support)
+  map(lm, formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) 
 
 # Multiply imputed pooled object
 fit %>% 
@@ -125,6 +125,9 @@ fit %>%
   summary(conf.int = TRUE) %>% 
   mutate(p.adjusted = round(p.adjust(p.value, method = "bonferroni"), 4)) %>% 
   relocate(p.adjusted, .before = `2.5 %`)
+
+fit %>% pool %>% pool.r.squared()
+fit %>% pool %>% pool.r.squared(adjusted = TRUE)
 
 # model comparison
 D1(fit, base.fit)

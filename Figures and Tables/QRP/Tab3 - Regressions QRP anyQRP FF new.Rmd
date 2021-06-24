@@ -172,6 +172,17 @@ d50 %>%
         paste("(", round(`2.5 %`, 2), ",", round(`97.5 %`, 2), ")", sep = ""))) %>% 
   select(term, Bci) %>% 
   datatable()
+
+
+d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% pool.r.squared()
+
+d50 %>% 
+  map(lm, 
+      formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% pool.r.squared(adjusted = TRUE)
 ```
 
 # Logistic model (Any QRP)

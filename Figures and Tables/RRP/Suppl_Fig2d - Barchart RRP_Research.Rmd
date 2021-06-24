@@ -87,7 +87,9 @@ a <- d %>% gather(key, value, -Research, factor_key = TRUE) %>%
   scale_fill_brewer(palette = "RdBu", direction = 1) +
   scale_y_continuous(labels = scales::percent) + 
   theme_minimal()  + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))   +
+  scale_fill_manual(values = c("grey50", "#D6604D", "#F4A582", "#FDDBC7", "#D1E5F0", "#92C5DE", "#4393C3", "#2166AC")) + 
+  guides(fill = guide_legend(reverse = TRUE)) + 
   facet_wrap(vars(Research)) 
 
 a
