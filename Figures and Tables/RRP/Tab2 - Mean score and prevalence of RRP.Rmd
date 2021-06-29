@@ -108,7 +108,7 @@ Overall <- d50[[1]] %>% #RRP has no missings -so use 1st imputed set
   select(starts_with("R")) %>% 
   select(-Rank, -Research) %>% 
   select(-RRfabr, -RRfals) %>% 
-  select(!contains("_")) %>% 
+  select(!contains("_"), RRP_ave) %>% 
   melt(variable.name = "Practices") %>% 
   group_by(Practices) %>% 
   summarise_all(list(n = length, mean = mean, sd = sd)) %>% 
@@ -125,7 +125,7 @@ Field <- d50[[1]] %>%
   select(Field, starts_with("R")) %>% 
   select(-Rank, -Research) %>% 
   select(-RRfabr, -RRfals) %>% 
-  select(!contains("_")) %>% # exclude raw
+  select(!contains("_"), RRP_ave) %>%  # exclude raw
   melt(id.vars = "Field", variable.name = "Practices", value.name = "Response") %>% 
   group_by(Field, Practices) %>% 
   summarise_all(list(n = length, mean = mean, sd = sd)) %>% 
@@ -144,7 +144,7 @@ Rank <- d50[[1]] %>%
   select(Rank, starts_with("R")) %>% 
   select(-Research) %>% 
   select(-RRfabr, -RRfals) %>% 
-  select(!contains("_")) %>% # exclude raw
+  select(!contains("_"), RRP_ave) %>%  # exclude raw
   melt(id.vars = "Rank", variable.name = "Practices", value.name = "Response") %>% 
   group_by(Rank, Practices) %>% 
   summarise_all(list(n = length, mean = mean, sd = sd)) %>% 
@@ -160,7 +160,7 @@ mci.Rank <- Rank %>% mutate(m.ci = paste(mean, ci, sep = " ")) %>% dcast(Practic
 ```{r echo = FALSE}
 Means <- merge(mci.Field, mci.Rank, by.x = "Practices")
 Means <- merge(Means, mci.overall, by.x = "Practices")
-Means <- Means[c(1:7, 9:12, 8), ]
+Means <- Means[c(5, 3, 1, 10, 7, 11, 4, 8, 2, 9, 6, 12), ]
 datatable(Means)
 Means
 ```
