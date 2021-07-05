@@ -83,58 +83,17 @@ d50 %<>%
 
 ---
 
-```{r echo=FALSE}
-knitr::opts_chunk$set(comment="", message=F, warning=F, echo=F, cache=F)
-RRpropodds <- function(df){
-  df <- na.omit(df)
-  y  <- df[, 1:2]
-  sy <- rowSums(y)
-  n  <- nrow(y)
-  M  <- ncol(y)
-  x <- model.matrix(~ ., df)[, -(1:3), drop = F]
-  P <- matrix(c(5, 1, 1, 5) / 6, 2, 2)
-  Q <- P %x% P
-  Q[2, ] <- colSums(Q[2:3, ])
-  Q <- Q[-3, -3]
-  logl <- function(theta){
-    alpha     <- matrix(theta[1:M], n, M, byrow = T)
-    b         <- theta[(M + 1):length(theta)]
-    if(ncol(df) > M){
-      xb        <- x %*% b
-      cum.probs <- exp(alpha + c(xb)) / (1 + exp(alpha + c(xb)))
-    } else {
-      cum.probs <- exp(alpha) / (1 + exp(alpha))
-    }
-    probs     <- cbind(cum.probs, 1) - cbind(0, cum.probs)
-    logl  <- 0
-    for(j in 0:M){
-      logl <- logl - sum(log(Q[j + 1, ] %*% t(probs[sy == j, ])))
-    }
-    return(logl + sum(b^2))
-  }
-  if (ncol(df) > M) {
-    par0 <- c(2, 5, rep(0, ncol(x)))
-  } else {
-    par0 <- c(2, 5)
-  }
-  fit  <- optim(par0, logl, hessian = T, method = "BFGS")
-  bhat  <- fit$par
-  bvar  <- diag(solve(fit$hessian))
-  data.frame(pars = c(paste0("alpha", 1:M), if(ncol(df) > M)colnames(x)), bhat, bvar)
-}
-```
-
-# Linear model
+# Linear model with NA = never
 ```{r echo = FALSE, cache = FALSE}
-d50 %>% 
+A <- d50 %>% 
   map(lm, 
       formula = RRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
   pool %>% 
   summary(conf.int = TRUE) %>% 
   mutate(Bci = paste(round(estimate, 2),
         paste("(", round(`2.5 %`, 2), ",", round(`97.5 %`, 2), ")", sep = ""))) %>% 
-  select(term, Bci) %>% 
-  datatable()
+  select(term, Bci) 
+datatable(A)
 
 d50 %>% 
   map(lm, 
@@ -155,27 +114,141 @@ d50 %>%
   pool %>% pool.r.squared(adjusted = TRUE)
 ```
 
-<!-- # Logistic model (Any RRP) -->
-<!-- ```{r} -->
-<!-- d50 %>%  -->
-<!--   map(glm, formula = RRP_1 ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support,  -->
-<!--       family = binomial(link = "logit")) %>%  -->
-<!--   pool %>%  -->
-<!--   summary(conf.int = TRUE) %>%  -->
-<!--   mutate(OR = if_else(term == '(Intercept)', as.numeric(NA), exp(estimate)),  -->
-<!--          lwr = if_else(term == '(Intercept)', as.numeric(NA),  -->
-<!--                        exp(estimate - 1.96 * std.error)), -->
-<!--          upr = if_else(term == '(Intercept)', as.numeric(NA),  -->
-<!--                        exp(estimate + 1.96 * std.error)), -->
-<!--          Oci = paste(round(OR, 2),  -->
-<!--                      paste("(", round(lwr, 2), ",", round(upr, 2), ")",  -->
-<!--                            sep = ""))) %>%  -->
-<!--   select(term, Oci) %>%  -->
-<!--   datatable() -->
-<!-- ``` -->
+# Linear model with NA = 7
+```{r echo = FALSE, cache = FALSE}
+rrp <- c("RDisclFunds", "RCorrectPub", "RAuthorship", "ROpenData", "RKeepRecord", 
+         "RPreReg", "RDataManage", "ROpenAccess", "RCiteSource", "ROpenCode", "RErrorCheck")
 
+Q <- d50
+Q <- Q %>% 
+  map(~ .x %>% 
+        mutate_at(paste(rrp, "_raw", sep = ""), ~ recode(., `0` = 7))) %>% 
+  map(~.x %>% 
+        mutate(RRPave = rowMeans(select(., 81:91), na.rm = TRUE)))
+
+B <- Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% 
+  mutate(Bci = paste(round(estimate, 2),
+        paste("(", round(`2.5 %`, 2), ",", round(`97.5 %`, 2), ")", sep = ""))) %>% 
+  select(term, Bci)
+datatable(B)
+
+Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% pool.r.squared
+Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% pool.r.squared(adjusted = TRUE)
+```
+
+
+# Linear model with NA = 4
+```{r echo = FALSE, cache = FALSE}
+rrp <- c("RDisclFunds", "RCorrectPub", "RAuthorship", "ROpenData", "RKeepRecord", 
+         "RPreReg", "RDataManage", "ROpenAccess", "RCiteSource", "ROpenCode", "RErrorCheck")
+
+Q <- d50
+Q <- Q %>% 
+  map(~ .x %>% 
+        mutate_at(paste(rrp, "_raw", sep = ""), ~ recode(., `0` = 4))) %>% 
+  map(~.x %>% 
+        mutate(RRPave = rowMeans(select(., 81:91), na.rm = TRUE)))
+
+C <- Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% 
+  mutate(Bci = paste(round(estimate, 2),
+        paste("(", round(`2.5 %`, 2), ",", round(`97.5 %`, 2), ")", sep = ""))) %>% 
+  select(term, Bci)
+datatable(C)
+
+
+Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% pool.r.squared
+Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% pool.r.squared(adjusted = TRUE)
+```
+
+# Linear model with NA = missing
+```{r echo = FALSE, cache = FALSE}
+rrp <- c("RDisclFunds", "RCorrectPub", "RAuthorship", "ROpenData", "RKeepRecord", 
+         "RPreReg", "RDataManage", "ROpenAccess", "RCiteSource", "ROpenCode", "RErrorCheck")
+
+Q <- d50
+Q <- Q %>% 
+  map(~ .x %>% 
+        mutate_at(paste(rrp, "_raw", sep = ""), ~ na_if(., 0))) %>% 
+  map(~.x %>% 
+        mutate(RRPave = rowMeans(select(., 81:91), na.rm = FALSE)))
+
+D <- Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% 
+  summary(conf.int = TRUE) %>% 
+  mutate(Bci = paste(round(estimate, 2),
+        paste("(", round(`2.5 %`, 2), ",", round(`97.5 %`, 2), ")", sep = ""))) %>% 
+  select(term, Bci)
+  
+datatable(D)
+ 
+
+
+Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% pool.r.squared
+Q %>% 
+  map(lm, 
+      formula = RRPave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+  pool %>% pool.r.squared(adjusted = TRUE)
+```
 
 ---
+
+# Comparison of models / simple sensitivity analysis
+
+The following models are compared side-by-side:
+
+- **never**: *not applicable* recoded as `1 (never)`
+
+  - Pro: If a practice is not applicable, it has semantical similarities to never
+  - Consequence: An underestimation of the use of responsible practices in all groups. The level of underestimation depends on the prevalence of NA's within the groups
+  
+- **always**: *not applicable* recoded as `7 (always)`
+
+  - Pro: I cannot think of a pro here, other than that you do not lull the reader into a false sense of underperformance for some groups where NA's are overrepresented. 
+  - Consequence: An overestimation of the use of responsible practices in all groups, especially in groups where NA's are more prevalent
+  
+- **as4**: *not applicable* recoded as `4 (neutral)`
+
+  - Pro: I cannot think of a pro here.
+  - Consequence: An false sense of RRP because of an arbitrary choice of coding
+  
+- **remove**: any row with *not applicable* removed before analysis
+
+  - Pro: removing rows has no pro, except for a single scenario (see Consequence)
+  - Consequence: A strict and explicit assumption that the NA's are randomly distributed over all measured and unmeasured covariates. We know that this is not the case!
+
+```{r}
+data.frame(term = A[, 1],
+           never = A[, 2],
+           always = B[, 2],
+           as4 = C[, 2],
+           remove = D[, 2]) %>% 
+  datatable()
+```
 
 # Session Info
 ```{r}
