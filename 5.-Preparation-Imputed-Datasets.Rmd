@@ -328,11 +328,11 @@ d50[[1]] %$% cor(cbind(OrgJust, DistJust, ProcJust)) %>% round(., 2)
 d50[[1]] %$% cor(cbind(Mentoring, MentSurv, MentResp)) %>% round(., 2)
 ```
 
-Deleting the 4 superfluous scale
+Deleting the 4 superfluous scale **NOT EXECUTED**
 
 ```{r}
-d50 <- d50 %>% 
-  map(select, - MentSurv, -MentResp, -DistJust, - ProcJust)
+#d50 <- d50 %>% 
+#  map(select, - MentSurv, -MentResp, -DistJust, - ProcJust) #Dec 15, 2022 GV checked JW
 ```
 
 
@@ -360,6 +360,12 @@ d50 <- d50 %>%
                                           F46_s, F47_s, F48_s, F49_s, F50_s, F51_s), 
                                     na.rm = T),
                Mentoring = if_else(is.na(Mentoring), m, Mentoring),
+               m         = rowMeans(cbind(F34_s, F35_s, F36_s, F37_s, F38_s, F39_s), 
+                                    na.rm = T),
+               MentSurv = if_else(is.na(MentSurv), m, MentSurv),
+               m         = rowMeans(cbind(F46_s, F47_s, F48_s, F49_s, F50_s, F51_s), 
+                                    na.rm = T),
+               MentResp = if_else(is.na(MentResp), m, MentResp),
                m         = rowMeans(cbind(F52_s, F53_s, F54_s, F55_s, F56_s, F57_s, 
                                           F58_s, F59_s, F60_s, F61_s, F62_s, F63_s),  
                                     na.rm = T),
