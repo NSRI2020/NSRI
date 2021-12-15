@@ -165,7 +165,7 @@ RRpropodds <- function(df){
 ```{r echo = FALSE, cache = TRUE}
 d50 %>% 
   map(lm, 
-      formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+      formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + MentSurv + MentResp + OrgJust + Field + Rank + Gender + Research + Support) %>% 
   pool %>% 
   summary(conf.int = TRUE) %>% 
   mutate(Bci = paste(round(estimate, 2),
@@ -176,19 +176,19 @@ d50 %>%
 
 d50 %>% 
   map(lm, 
-      formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+      formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + MentSurv + MentResp + OrgJust + Field + Rank + Gender + Research + Support) %>% 
   pool %>% pool.r.squared()
 
 d50 %>% 
   map(lm, 
-      formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support) %>% 
+      formula = QRP_ave ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + MentSurv + MentResp + OrgJust + Field + Rank + Gender + Research + Support) %>% 
   pool %>% pool.r.squared(adjusted = TRUE)
 ```
 
 # Logistic model (Any QRP)
 ```{r}
 d50 %>% 
-  map(glm, formula = QRP_1 ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + Mentoring + OrgJust + Field + Rank + Gender + Research + Support, 
+  map(glm, formula = QRP_1 ~ SciNorms + PeerNorms + WorkPress + PubPress + FundPress + Competitive + DetectCol + DetectRev + MentSurv + MentResp + OrgJust + Field + Rank + Gender + Research + Support, 
       family = binomial(link = "logit")) %>% 
   pool %>% 
   summary(conf.int = TRUE) %>% 
@@ -208,7 +208,7 @@ d50 %>%
 ```{r echo = FALSE, cache = TRUE}
 set.seed(123)
 d50 %>% 
-  map(select, RRfabr, RRfals, SciNorms, PeerNorms, WorkPress,  PubPress,  FundPress,  Competitive,  DetectCol,  DetectRev,  Mentoring,  OrgJust,  Field,  Rank,  Gender,  Research,  Support) %>% 
+  map(select, RRfabr, RRfals, SciNorms, PeerNorms, WorkPress,  PubPress,  FundPress,  Competitive,  DetectCol,  DetectRev,  MentSurv,  MentResp,  OrgJust,  Field,  Rank,  Gender,  Research,  Support) %>% 
   map(RRpropodds) %>% 
   reduce(rbind) %>% 
   group_by(pars) %>% 
