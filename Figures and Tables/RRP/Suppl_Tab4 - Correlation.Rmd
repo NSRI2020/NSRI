@@ -77,7 +77,7 @@ fisher.backtrans <- function(x) (exp(2 * x) - 1) / (exp(2 * x) + 1)
 
 cor <- d50 %>%
   map(~.x %>% 
-        select(SciNorms, PeerNorms, WorkPress, PubPress, FundPress, Competitive, DetectCol, DetectRev, Mentoring, OrgJust) %>% 
+        select(SciNorms, PeerNorms, WorkPress, PubPress, FundPress, Competitive, DetectCol, DetectRev, MentSurv, MentResp, OrgJust) %>% 
         stats::cor(use = "pairwise.complete.obs") %>%
         fisher.trans)
 cor.rect <- Reduce("+", cor) / length(cor) # m is equal to the length of the list
