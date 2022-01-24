@@ -103,7 +103,7 @@ Row3 <- rbind(c(r1a, r1b, r1c), paste0("(", round(c(r2a, r2b, r2c), 1),")"))
 rownames(Row3) <- c("Support N", "Support %")
 # Means
 evs  <- c("SciNorms", "PeerNorms", "WorkPress", "PubPress", "FundPress",
-         "Competitive","DetectCol", "DetectRev", "Mentoring", "OrgJust")
+         "Competitive","DetectCol", "DetectRev", "MentSurv", "MentResp", "OrgJust")
 #
 msd <- function(x){
   rm <- rowMeans(x, na.rm = TRUE)
@@ -137,7 +137,10 @@ d50 %>% map(select, F64:F69) %>%
 d50 %>% map(select, F70:F75)%>% 
   map(msd) %>% 
   Reduce("+", .) / 50,
-d50 %>% map(select, F34:F39, F46:F51) %>% 
+d50 %>% map(select, F34:F39) %>% 
+  map(msd) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(select, F46:F51) %>% 
   map(msd) %>% 
   Reduce("+", .) / 50,
 d50 %>% map(select, F52:F63) %>% 
@@ -191,8 +194,13 @@ d50 %>% map(~.x %>%
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Field == "Bio & Life") %>% 
-              select(F34:F39, F46:F51) %>% 
-              msd()) %>% 
+              select(F34:F39) %>% 
+               msd()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+               filter(Field == "Bio & Life") %>% 
+               select(F46:F51) %>% 
+               msd()) %>% 
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Field == "Bio & Life") %>% 
@@ -251,8 +259,13 @@ d50 %>% map(~.x %>%
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Field == "Soc & Beh") %>% 
-              select(F34:F39, F46:F51) %>% 
-              msd()) %>% 
+              select(F34:F39) %>% 
+               msd()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Field == "Soc & Beh") %>% 
+              select(F46:F51) %>% 
+               msd()) %>% 
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Field == "Soc & Beh") %>% 
@@ -310,7 +323,12 @@ d50 %>% map(~.x %>%
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Field == "Arts & Hum") %>% 
-              select(F34:F39, F46:F51) %>% 
+              select(F34:F39) %>% 
+              msd()) %>% 
+  Reduce("+", .) / 50,
+ d50 %>% map(~.x %>% 
+              filter(Field == "Arts & Hum") %>% 
+              select(F46:F51) %>% 
               msd()) %>% 
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
@@ -371,7 +389,12 @@ d50 %>% map(~.x %>%
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Field == "Eng & Nat") %>% 
-              select(F34:F39, F46:F51) %>% 
+              select(F34:F39) %>% 
+              msd()) %>% 
+   Reduce("+", .) / 50,
+ d50 %>% map(~.x %>% 
+              filter(Field == "Eng & Nat") %>% 
+              select(F46:F51) %>% 
               msd()) %>% 
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
@@ -429,7 +452,12 @@ d50 %>% map(~.x %>%
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Rank == "PhD") %>% 
-              select(F34:F39, F46:F51) %>% 
+              select(F34:F39) %>% 
+              msd()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "PhD") %>% 
+              select(F46:F51) %>% 
               msd()) %>% 
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
@@ -489,7 +517,12 @@ d50 %>% map(~.x %>%
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Rank == "Postdoc") %>% 
-              select(F34:F39, F46:F51) %>% 
+              select(F34:F39) %>% 
+              msd()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Postdoc") %>% 
+              select(F46:F51) %>% 
               msd()) %>% 
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
@@ -546,7 +579,12 @@ d50 %>% map(~.x %>%
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
               filter(Rank == "Prof") %>% 
-              select(F34:F39, F46:F51) %>% 
+              select(F34:F39) %>% 
+              msd()) %>% 
+  Reduce("+", .) / 50,
+d50 %>% map(~.x %>% 
+              filter(Rank == "Prof") %>% 
+              select(F46:F51) %>% 
               msd()) %>% 
   Reduce("+", .) / 50,
 d50 %>% map(~.x %>% 
