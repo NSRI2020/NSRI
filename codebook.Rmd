@@ -45,7 +45,7 @@ Code book for the 50 data sets stored in the R workspace: '5. Preparation Impute
 knitr::opts_chunk$set(echo=F)
 library(DT)
 
-load("5. Preparation Imputed Datasets.RData")
+load("Workspaces/5. Preparation Imputed Datasets.RData")
 
 v <- ordered(names(d50[[1]]))
 v <- unlist(v)
@@ -70,7 +70,7 @@ values <- c(paste(levels(factor(d50[[1]]$Field)), collapse = ", "),
             "continuous in interval (0, 7)",
             "continuous in interval (0, 7)",
             "1 = yes, 0 = no",
-            rep("z-scores (mean = 0, sd = 1)", 10))
+            rep("z-scores (mean = 0, sd = 1)", 14))
 
 
 
@@ -186,7 +186,7 @@ rep(paste("Recoded scores of raw QRP"), 11),
 "Average score on the 11 RRP's",
 "Average score on the 11 QRP's",
 "At least one QRP score > 4",
-paste("1st principal component of items ",  c("F1:F9", "F10:F18", "F19:F21", "F22,F27", "F28:F33", "F40:F45", "F64:F69", "F70:F75", "F34:F39, F46:F51", "F52:F63"))
+paste("1st principal component of items ",  c("F1:F9", "F10:F18", "F19:F21", "F22,F27", "F28:F33", "F40:F45", "F64:F69", "F70:F75", "F34:F39, F46:F51", "F52:F63", "F34:F39", "F46:F51", "F52:F57", "F58:F63"))
 )
 
 ```
